@@ -27,22 +27,24 @@ const ErrorPage: FC<ErrorProps> = ({ statusCode }) => {
         <title>{`${statusCode}: ${phrase}`}</title>
         <style dangerouslySetInnerHTML={{ __html: 'body { margin: 0 }' }} />
       </Head>
-      <h1
+      <span
         style={{
           fontSize: '1.5rem',
           lineHeight: '2rem',
+          fontWeight: 'bold',
+          marginRight: '2rem',
         }}
       >
         {statusCode}
-      </h1>
-      <h2
+      </span>
+      <span
         style={{
           fontSize: '1.25rem',
           lineHeight: '1.75rem',
         }}
       >
         {phrase}
-      </h2>
+      </span>
     </div>
   );
 };

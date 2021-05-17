@@ -69,7 +69,7 @@ export const DocumentScript: FC = () => {
         }}
       />
       <script
-        type="text/javascript"
+        type="module"
         src={context?.scriptURL ?? ''}
       />
     </>
