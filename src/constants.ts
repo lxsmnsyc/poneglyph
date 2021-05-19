@@ -1,4 +1,4 @@
-import { BuildFullOptions } from "./core/types";
+import { BuildFullOptions } from './core/types';
 
 export const DOCUMENT_MAIN_ROOT = 'poneglyph__root';
 

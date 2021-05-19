@@ -11,7 +11,6 @@ export default async function createPagesMap(
     options.pagesDir,
   );
   const targetFile = path.join(
-    process.cwd(),
     options.buildDir,
     'pages-map.json',
   );

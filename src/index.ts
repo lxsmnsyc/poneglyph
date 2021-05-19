@@ -20,3 +20,6 @@ export {
 export {
   default as createServer,
 } from './core/server';
+export {
+  default as createBuild,
+} from './core/build';
