@@ -1,7 +1,9 @@
-import path from 'path';
-import fs from 'fs-extra';
+import { SUPPORTED_PAGE_EXT } from '../constants';
 
 async function traverseDirectory(root: string, directory: string = root): Promise<string[]> {
+  const fs = await import('fs-extra');
+  const path = await import('path');
+
   const files = await fs.readdir(directory);
 
   const recursiveTraverse = async (file: string) => {
@@ -21,5 +23,10 @@ async function traverseDirectory(root: string, directory: string = root): Promis
 }
 
 export default async function getPages(dir: string): Promise<string[]> {
-  return traverseDirectory(path.join(process.cwd(), dir));
+  const path = await import('path');
+  return /* @__PURE__ */ (await traverseDirectory(path.join(process.cwd(), dir)))
+    .filter((file) => {
+      const extension = path.extname(file);
+      return SUPPORTED_PAGE_EXT.includes(extension);
+    });
 }

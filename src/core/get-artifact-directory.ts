@@ -1,27 +1,28 @@
-import path from 'path';
 import { BUILD_OUTPUT } from '../constants';
 import { BuildFullOptions, BundleType } from './types';
 
-export function getArtifactBaseDirectory(
+export async function getArtifactBaseDirectory(
   options: BuildFullOptions,
   environment: string,
   bundleType: BundleType,
-): string {
-  return path.join(
+): Promise<string> {
+  const path = await import('path');
+  return /* @__PURE__ */ path.join(
     options.buildDir,
     environment,
     BUILD_OUTPUT[bundleType].temp,
   );
 }
 
-export default function getArtifactDirectory(
+export default async function getArtifactDirectory(
   options: BuildFullOptions,
   environment: string,
   bundleType: BundleType,
   directory: string,
-): string {
-  return path.join(
-    getArtifactBaseDirectory(
+): Promise<string> {
+  const path = await import('path');
+  return /* @__PURE__ */ path.join(
+    /* @__PURE__ */ await getArtifactBaseDirectory(
       options,
       environment,
       bundleType,

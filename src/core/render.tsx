@@ -1,7 +1,7 @@
 import React, { ComponentType, ReactNode } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { IncomingMessage, ServerResponse } from 'http';
-import ecmason from 'ecmason';
+import { stringify } from 'ecmason';
 import { ParsedUrlQuery } from 'querystring';
 import {
   DefaultDocument,
@@ -12,7 +12,7 @@ import { TailContext } from '../components/Tail';
 import ErrorPage, { ErrorProps } from '../components/Error';
 import DefaultApp, { AppComponent } from '../components/App';
 import { RouterParams } from './router';
-import { STATIC_PATH } from '../constants';
+import { CUSTOM_404, CUSTOM_500, CUSTOM_ERROR, STATIC_PATH } from '../constants';
 
 export type Params = RouterParams;
 export type Query = ParsedUrlQuery;
@@ -105,7 +105,7 @@ function renderInternal<P>(
         html: result,
         head: collectedHead,
         tail: collectedTail,
-        data: ecmason.stringify(options.pageProps),
+        data: stringify(options.pageProps),
         scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js`,
         styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css`,
       }}
@@ -151,12 +151,12 @@ export function getErrorPath(
   global: GlobalRenderOptions,
 ): string {
   if (statusCode === 404 && global.error404) {
-    return '_404';
+    return CUSTOM_404;
   }
   if (statusCode === 500 && global.error500) {
-    return '_500';
+    return CUSTOM_500;
   }
-  return '_error';
+  return CUSTOM_ERROR;
 }
 
 export function renderError<P extends Params = Params, Q extends Query = Query>(

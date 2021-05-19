@@ -17,7 +17,9 @@ interface DocumentContextValue {
   styleURL: string;
 }
 
-export const DocumentContext = createContext<DocumentContextValue | undefined>(undefined);
+export const DocumentContext = /* @__PURE__ */ (
+  createContext<DocumentContextValue | undefined>(undefined)
+);
 
 export const DocumentHead: FC = ({ children }) => {
   const context = useContext(DocumentContext);

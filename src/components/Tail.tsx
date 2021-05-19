@@ -2,7 +2,7 @@ import {
   createContext, FC, ReactNode, useContext,
 } from 'react';
 
-export const TailContext = createContext<ReactNode[] | undefined>(undefined);
+export const TailContext = /* @__PURE__ */ createContext<ReactNode[] | undefined>(undefined);
 
 const Tail: FC = ({ children }) => {
   const context = useContext(TailContext);

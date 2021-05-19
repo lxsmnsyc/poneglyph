@@ -1,8 +1,4 @@
 import { RequestListener } from 'http';
-import querystring from 'querystring';
-import path from 'path';
-import mime from 'mime-types';
-import fs from 'fs-extra';
 import {
   GlobalRenderOptions,
   render, RenderContext, renderError, SSGOptions, SSROptions,
@@ -28,8 +24,15 @@ export default function createServer<P>(
 
     if (host && originalURL) {
       const readStaticFile = async (prefix: string) => {
+        const fs = await import('fs-extra');
+        const path = await import('path');
+        const mime = await import('mime-types');
+
         const file = originalURL.substring(prefix.length);
         const targetFile = path.join(global.buildDir, file);
+
+        console.log(path.resolve(targetFile));
+
         const stat = await fs.stat(targetFile);
         const mimeType = mime.contentType(path.basename(file));
         if (stat.isFile() && mimeType) {
@@ -84,6 +87,8 @@ export default function createServer<P>(
       }
       const getContent = async (): Promise<string> => {
         try {
+          const querystring = await import('querystring');
+
           const url = new URL(originalURL, `http://${host}`);
 
           const splitPath = url.pathname.split('/');

@@ -2,7 +2,7 @@ import {
   createContext, FC, ReactNode, useContext,
 } from 'react';
 
-export const HeadContext = createContext<ReactNode[] | undefined>(undefined);
+export const HeadContext = /* @__PURE__ */ createContext<ReactNode[] | undefined>(undefined);
 
 const Head: FC = ({ children }) => {
   const context = useContext(HeadContext);

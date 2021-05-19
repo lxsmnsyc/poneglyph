@@ -1,5 +1,4 @@
-import path from 'path';
-
-export default function getPOSIXPath(file: string): string {
+export default async function getPOSIXPath(file: string): Promise<string> {
+  const path = await import('path');
   return file.split(path.sep).join(path.posix.sep);
 }
