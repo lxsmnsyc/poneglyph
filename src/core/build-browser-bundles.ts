@@ -1,7 +1,7 @@
 import { build, BuildResult } from 'esbuild';
 import fs from 'fs-extra';
 import path from 'path';
-import { BUILD_OUTPUT, SUPPORTED_PAGE_EXT } from './constants';
+import { SUPPORTED_PAGE_EXT, BUILD_OUTPUT, RESERVED_PAGES } from '../constants';
 import getArtifactDirectory, { getArtifactBaseDirectory } from './get-artifact-directory';
 import getPages from './get-pages';
 import getPOSIXPath from './get-posix-path';
@@ -23,7 +23,7 @@ async function buildBrowserBundle(
       options.buildDir,
       environment,
       BUILD_OUTPUT.browser.output,
-      `${index}`,
+      RESERVED_PAGES.includes(targetPage) ? targetPage : `${index}`,
     );
 
     const artifactDir = getArtifactDirectory(
@@ -39,7 +39,6 @@ async function buildBrowserBundle(
     );
 
     const srcFile = path.join(
-      process.cwd(),
       options.pagesDir,
       directory,
       filename,

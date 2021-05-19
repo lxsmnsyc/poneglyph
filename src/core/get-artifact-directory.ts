@@ -1,5 +1,5 @@
 import path from 'path';
-import { BUILD_OUTPUT } from './constants';
+import { BUILD_OUTPUT } from '../constants';
 import { BuildFullOptions, BundleType } from './types';
 
 export function getArtifactBaseDirectory(
