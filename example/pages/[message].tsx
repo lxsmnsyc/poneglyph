@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'poneglyph';
+import { GetServerSideProps, Head } from 'poneglyph';
 import React from 'react';
 
 import '../styles/index.css';
@@ -21,6 +21,9 @@ export const getServerSideProps: GetServerSideProps<Props, Params> = (ctx) => ({
 export default function Example({ message }: Props) {
   return (
     <main>
+      <Head>
+        <title>{`Hello ${message}`}</title>
+      </Head>
       <h1>Hello {message}</h1>
     </main>
   );
