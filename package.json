@@ -61,5 +61,19 @@
     "http-status-codes": "^2.1.4",
     "mime-types": "^2.1.30",
     "prop-types": "^15.7.2"
-  }
+  },
+  "description": "React SSR framework, powered by ESBuild",
+  "repository": {
+    "url": "https://github.com/lxsmnsyc/poneglyph.git",
+    "type": "git"
+  },
+  "homepage": "https://github.com/lxsmnsyc/poneglyph",
+  "bugs": {
+    "url": "https://github.com/lxsmnsyc/poneglyph/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Alexis Munsayac",
+  "private": false
 }
