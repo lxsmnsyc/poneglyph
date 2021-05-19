@@ -3,8 +3,14 @@ import ReactDOM from 'react-dom';
 import { parse } from 'ecmason';
 import { AppComponent } from '../components/App';
 import { DOCUMENT_DATA, DOCUMENT_MAIN_ROOT } from '../constants';
+import { ErrorProps } from '../components/Error';
+import ErrorBoundary from '../components/ErrorBoundary';
 
-export default function hydrate<P>(App: AppComponent, Component: ComponentType<P>): void {
+export default function hydrate<P>(
+  App: AppComponent,
+  ErrorPage: ComponentType<ErrorProps>,
+  Component: ComponentType<P>,
+): void {
   const dataSource = document.getElementById(DOCUMENT_DATA);
 
   if (!dataSource) {
@@ -14,9 +20,11 @@ export default function hydrate<P>(App: AppComponent, Component: ComponentType<P
   const parsedData = parse<P>(dataSource.textContent || '');
 
   ReactDOM.hydrate((
-    <App
-      Component={Component}
-      pageProps={parsedData}
-    />
+    <ErrorBoundary fallback={<ErrorPage statusCode={500} />}>
+      <App
+        Component={Component}
+        pageProps={parsedData}
+      />
+    </ErrorBoundary>
   ), document.getElementById(DOCUMENT_MAIN_ROOT));
 }

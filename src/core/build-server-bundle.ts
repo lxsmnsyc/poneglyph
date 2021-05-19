@@ -198,6 +198,11 @@ http.createServer(createServer(globalConfig, pages)).listen(3000);
       ...options.env,
       'process.env.NODE_ENV': JSON.stringify(environment),
     },
+    external: [
+      'react',
+      'react-dom',
+      'poneglyph',
+    ],
     tsconfig: await resolveTSConfig(options.tsconfig),
   });
 

@@ -12,7 +12,13 @@ import { TailContext } from '../components/Tail';
 import ErrorPage, { ErrorProps } from '../components/Error';
 import DefaultApp, { AppComponent } from '../components/App';
 import { RouterParams } from './router';
-import { CUSTOM_404, CUSTOM_500, CUSTOM_ERROR, STATIC_PATH } from '../constants';
+import {
+  CUSTOM_404,
+  CUSTOM_500,
+  CUSTOM_ERROR,
+  STATIC_PATH,
+} from '../constants';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export type Params = RouterParams;
 export type Query = ParsedUrlQuery;
@@ -48,10 +54,10 @@ export type GetServerSideProps<Props, P extends Params = Params, Q extends Query
 export interface GlobalRenderOptions {
   buildDir: string;
   app?: AppComponent;
-  document?: () => JSX.Element;
-  error404?: (props: ErrorProps) => JSX.Element;
-  error500?: (props: ErrorProps) => JSX.Element;
-  error?: (props: ErrorProps) => JSX.Element;
+  document?: ComponentType;
+  error404?: ComponentType<ErrorProps>;
+  error500?: ComponentType<ErrorProps>;
+  error?: ComponentType<ErrorProps>;
 }
 
 export interface RenderBaseOptions {
@@ -74,58 +80,6 @@ interface RenderInternalProps<P> extends RenderBaseOptions {
   pageProps: P;
   Component: ComponentType<P>;
 }
-
-function renderInternal<P>(
-  global: GlobalRenderOptions,
-  options: RenderInternalProps<P>,
-): string {
-  const App = global.app ?? DefaultApp;
-
-  const collectedHead: ReactNode[] = [];
-  const collectedTail: ReactNode[] = [];
-
-  const result = ReactDOMServer.renderToString((
-    <HeadContext.Provider value={collectedHead}>
-      <TailContext.Provider value={collectedTail}>
-        <App
-          Component={options.Component}
-          pageProps={options.pageProps}
-        />
-      </TailContext.Provider>
-    </HeadContext.Provider>
-  ));
-
-  const flag = '<!DOCTYPE html>';
-
-  const DocumentComponent = global.document ?? DefaultDocument;
-
-  return flag + ReactDOMServer.renderToString((
-    <DocumentContext.Provider
-      value={{
-        html: result,
-        head: collectedHead,
-        tail: collectedTail,
-        data: stringify(options.pageProps),
-        scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js`,
-        styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css`,
-      }}
-    >
-      <DocumentComponent />
-    </DocumentContext.Provider>
-  ));
-}
-
-export function renderSSG<P extends Params = Params, Q extends Query = Query>(
-  ctx: RenderContext<P, Q>,
-  global: GlobalRenderOptions,
-  options: SSGOptions,
-): string {
-  return renderInternal(global, {
-    ...options,
-    pageProps: {},
-  });
-}
-
 export interface RenderErrorProps {
   statusCode: number;
 }
@@ -159,6 +113,49 @@ export function getErrorPath(
   return CUSTOM_ERROR;
 }
 
+function renderInternal<P>(
+  global: GlobalRenderOptions,
+  options: RenderInternalProps<P>,
+): string {
+  const App = global.app ?? DefaultApp;
+  const CustomError = getErrorComponent(500, global);
+
+  const collectedHead: ReactNode[] = [];
+  const collectedTail: ReactNode[] = [];
+
+  const result = ReactDOMServer.renderToString((
+    <ErrorBoundary fallback={<CustomError statusCode={500} />}>
+      <HeadContext.Provider value={collectedHead}>
+        <TailContext.Provider value={collectedTail}>
+          <App
+            Component={options.Component}
+            pageProps={options.pageProps}
+          />
+        </TailContext.Provider>
+      </HeadContext.Provider>
+    </ErrorBoundary>
+  ));
+
+  const flag = '<!DOCTYPE html>';
+
+  const DocumentComponent = global.document ?? DefaultDocument;
+
+  return flag + ReactDOMServer.renderToString((
+    <DocumentContext.Provider
+      value={{
+        html: result,
+        head: collectedHead,
+        tail: collectedTail,
+        data: stringify(options.pageProps),
+        scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js`,
+        styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css`,
+      }}
+    >
+      <DocumentComponent />
+    </DocumentContext.Provider>
+  ));
+}
+
 export function renderError<P extends Params = Params, Q extends Query = Query>(
   ctx: RenderContext<P, Q>,
   global: GlobalRenderOptions,
@@ -171,6 +168,17 @@ export function renderError<P extends Params = Params, Q extends Query = Query>(
     entrypoint: target,
     Component: getErrorComponent(options.statusCode, global),
     pageProps: { statusCode: options.statusCode },
+  });
+}
+
+export function renderSSG<P extends Params = Params, Q extends Query = Query>(
+  ctx: RenderContext<P, Q>,
+  global: GlobalRenderOptions,
+  options: SSGOptions,
+): string {
+  return renderInternal(global, {
+    ...options,
+    pageProps: {},
   });
 }
 

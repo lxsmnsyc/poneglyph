@@ -5,6 +5,7 @@ import {
 } from './render';
 import { addRoute, createRouterNode, matchRoute } from './router';
 import { PUBLIC_PATH, STATIC_PATH } from '../constants';
+import StatusCode from './errors/StatusCode';
 
 export type ServerOptions<P> = (SSGOptions | SSROptions<P>)[];
 
@@ -18,7 +19,23 @@ export default function createServer<P>(
     addRoute(node, option.path.split('/'), option);
   });
 
-  return (request, response) => {
+  return function (request, response) {
+    function errorHandler(error: Error) {
+      const statusCode = (error instanceof StatusCode) ? error.value : 500;
+      console.log(error);
+      response.statusCode = statusCode;
+      const context: RenderContext = {
+        request,
+        response,
+        params: {},
+        query: {},
+      };
+      response.setHeader('Content-Type', 'text/html');
+      response.end(renderError(context, global, {
+        statusCode,
+      }));
+    }
+
     const { host } = request.headers;
     const originalURL = request.url;
 
@@ -33,56 +50,34 @@ export default function createServer<P>(
 
         console.log(path.resolve(targetFile));
 
-        const stat = await fs.stat(targetFile);
-        const mimeType = mime.contentType(path.basename(file));
-        if (stat.isFile() && mimeType) {
-          const buffer = await fs.readFile(targetFile);
-          console.log('Serving file', originalURL, mimeType);
-          response.setHeader('Content-Type', mimeType);
-          response.end(buffer);
-        } else {
-          const context: RenderContext = {
-            request,
-            response,
-            params: {},
-            query: {},
-          };
-          response.setHeader('Content-Type', 'text/html');
-          response.end(renderError(context, global, {
-            statusCode: 404,
-          }));
+        try {
+          const stat = await fs.stat(targetFile);
+          const mimeType = mime.contentType(path.basename(file));
+          if (stat.isFile() && mimeType) {
+            const buffer = await fs.readFile(targetFile);
+            console.log('Serving file', originalURL, mimeType);
+            response.statusCode = 200;
+            response.setHeader('Content-Type', mimeType);
+            response.end(buffer);
+          } else {
+            throw new StatusCode(404);
+          }
+        } catch (error) {
+          if (error instanceof StatusCode) {
+            throw error;
+          } else {
+            throw new StatusCode(404);
+          }
         }
       };
       const staticPrefix = `/${STATIC_PATH}/`;
       if (originalURL.startsWith(staticPrefix)) {
-        readStaticFile(staticPrefix).catch(() => {
-          const context: RenderContext = {
-            request,
-            response,
-            params: {},
-            query: {},
-          };
-          response.setHeader('Content-Type', 'text/html');
-          response.end(renderError(context, global, {
-            statusCode: 500,
-          }));
-        });
+        readStaticFile(staticPrefix).catch(errorHandler);
         return;
       }
       const publicPrefix = `/${PUBLIC_PATH}/`;
       if (originalURL.startsWith(publicPrefix)) {
-        readStaticFile(publicPrefix).catch(() => {
-          const context: RenderContext = {
-            request,
-            response,
-            params: {},
-            query: {},
-          };
-          response.setHeader('Content-Type', 'text/html');
-          response.end(renderError(context, global, {
-            statusCode: 500,
-          }));
-        });
+        readStaticFile(publicPrefix).catch(errorHandler);
         return;
       }
       const getContent = async (): Promise<string> => {
@@ -107,33 +102,22 @@ export default function createServer<P>(
             console.log('Serving', originalURL);
             return render(context, global, option);
           }
-          return renderError({
-            request,
-            response,
-            params: {},
-            query: {},
-          }, global, {
-            statusCode: 404,
-          });
+
+          throw new StatusCode(404);
         } catch (error) {
-          const context: RenderContext = {
-            request,
-            response,
-            params: {},
-            query: {},
-          };
-          return renderError(context, global, {
-            statusCode: 500,
-          });
+          if (error instanceof StatusCode) {
+            throw error;
+          } else {
+            throw new StatusCode(500);
+          }
         }
       };
 
       getContent().then((value) => {
+        response.statusCode = 200;
         response.setHeader('Content-Type', 'text/html');
         response.end(value);
-      }, (error) => {
-        console.error(error);
-      });
+      }, errorHandler);
     }
   };
 }

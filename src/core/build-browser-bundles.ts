@@ -1,6 +1,6 @@
 import { BuildResult } from 'esbuild';
 import {
-  SUPPORTED_PAGE_EXT, BUILD_OUTPUT, RESERVED_PAGES, CUSTOM_APP,
+  SUPPORTED_PAGE_EXT, BUILD_OUTPUT, RESERVED_PAGES, CUSTOM_APP, CUSTOM_500, CUSTOM_ERROR,
 } from '../constants';
 import getArtifactDirectory, { getArtifactBaseDirectory } from './get-artifact-directory';
 import getPages from './get-pages';
@@ -40,6 +40,83 @@ async function getApp(pageDir: string): Promise<string | undefined> {
   }
 
   return undefined;
+}
+
+async function get500Page(pageDir: string): Promise<string | undefined> {
+  const fs = await import('fs-extra');
+  const path = await import('path');
+
+  const result = await Promise.all(
+    SUPPORTED_PAGE_EXT.map(async (ext) => {
+      const app = path.join(
+        pageDir,
+        `${CUSTOM_500}${ext}`,
+      );
+
+      try {
+        await fs.access(app);
+        return {
+          path: app,
+          stat: true,
+        };
+      } catch (error) {
+        return {
+          path: app,
+          stat: false,
+        };
+      }
+    }),
+  );
+  for (let i = 0; i < result.length; i += 1) {
+    if (result[i].stat) {
+      return getPOSIXPath(result[i].path);
+    }
+  }
+
+  return undefined;
+}
+
+async function getErrorPage(pageDir: string): Promise<string | undefined> {
+  const fs = await import('fs-extra');
+  const path = await import('path');
+
+  const result = await Promise.all(
+    SUPPORTED_PAGE_EXT.map(async (ext) => {
+      const app = path.join(
+        pageDir,
+        `${CUSTOM_ERROR}${ext}`,
+      );
+
+      try {
+        await fs.access(app);
+        return {
+          path: app,
+          stat: true,
+        };
+      } catch (error) {
+        return {
+          path: app,
+          stat: false,
+        };
+      }
+    }),
+  );
+  for (let i = 0; i < result.length; i += 1) {
+    if (result[i].stat) {
+      return getPOSIXPath(result[i].path);
+    }
+  }
+
+  return undefined;
+}
+
+async function getFallbackPage(pageDir: string): Promise<string | undefined> {
+  const error500 = await get500Page(pageDir);
+  if (error500) {
+    return error500;
+  }
+  const errorPage = await getErrorPage(pageDir);
+  return errorPage;
 }
 
 async function buildBrowserBundle(
@@ -95,12 +172,23 @@ async function buildBrowserBundle(
       : 'import { DefaultApp as App } from \'poneglyph\';'
   );
 
+  const error = await getErrorPage(options.pagesDir);
+
+  const errorImport = (
+    error
+      ? `import ErrorPage from '${await getPOSIXPath(
+        path.relative(artifactDir, error),
+      )}';`
+      : 'import { ErrorPage } from \'poneglyph\';'
+  );
+
   await fs.outputFile(artifact, `
   import { hydrate } from 'poneglyph';
   ${appImport}
+  ${errorImport}
   import Render from '${targetFile}';
 
-  hydrate(App, Render);
+  hydrate(App, ErrorPage, Render);
 `);
 
   const esbuild = await import('esbuild');
