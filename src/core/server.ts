@@ -26,16 +26,15 @@ export default function createServer<P>(
     const { host } = request.headers;
     const originalURL = request.url;
 
-    console.log('Serving', originalURL);
-
     if (host && originalURL) {
       const readStaticFile = async (prefix: string) => {
         const file = originalURL.substring(prefix.length);
         const targetFile = path.join(global.buildDir, file);
         const stat = await fs.stat(targetFile);
-        const mimeType = mime.contentType(file);
+        const mimeType = mime.contentType(path.basename(file));
         if (stat.isFile() && mimeType) {
           const buffer = await fs.readFile(targetFile);
+          console.log('Serving file', originalURL, mimeType);
           response.setHeader('Content-Type', mimeType);
           response.end(buffer);
         } else {
@@ -100,6 +99,7 @@ export default function createServer<P>(
               query: querystring.decode(url.search),
             };
 
+            console.log('Serving', originalURL);
             return render(context, global, option);
           }
           return renderError({

@@ -56,6 +56,8 @@ export interface GlobalRenderOptions {
 
 export interface RenderBaseOptions {
   path: string;
+  resourceID: string;
+  entrypoint: string;
 }
 
 export interface SSROptions<P> extends RenderBaseOptions {
@@ -104,8 +106,8 @@ function renderInternal<P>(
         head: collectedHead,
         tail: collectedTail,
         data: ecmason.stringify(options.pageProps),
-        scriptURL: `/${STATIC_PATH}${options.path}.js`,
-        styleURL: `/${STATIC_PATH}${options.path}.css`,
+        scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js`,
+        styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css`,
       }}
     >
       <DocumentComponent />
@@ -149,12 +151,12 @@ export function getErrorPath(
   global: GlobalRenderOptions,
 ): string {
   if (statusCode === 404 && global.error404) {
-    return '/404';
+    return '_404';
   }
   if (statusCode === 500 && global.error500) {
-    return '/500';
+    return '_500';
   }
-  return '/_error';
+  return '_error';
 }
 
 export function renderError<P extends Params = Params, Q extends Query = Query>(
@@ -162,8 +164,11 @@ export function renderError<P extends Params = Params, Q extends Query = Query>(
   global: GlobalRenderOptions,
   options: RenderErrorProps,
 ): string {
+  const target = getErrorPath(options.statusCode, global);
   return renderInternal(global, {
-    path: getErrorPath(options.statusCode, global),
+    path: `/${target}`,
+    resourceID: target,
+    entrypoint: target,
     Component: getErrorComponent(options.statusCode, global),
     pageProps: { statusCode: options.statusCode },
   });

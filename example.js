@@ -7,6 +7,8 @@ http.createServer(poneglyph.createServer({
 }, [
   {
     path: '/a',
+    resourceID: '0',
+    entrypoint: 'a',
     Component: () => react.createElement('h1', {}, ['Hello World']),
   }
 ])).listen(3000);
