@@ -19,7 +19,7 @@ export default async function createPagesMap(
     const posix = await getPOSIXPath(page);
     return path.join(path.dirname(posix), path.basename(posix, path.extname(posix)));
   }));
-  await fs.writeJSON(
+  await fs.outputJSON(
     targetFile,
     result,
   );
