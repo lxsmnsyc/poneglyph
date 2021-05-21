@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../pages/index.tsx", "../tmp.node/index.tsx"],
+  "sourcesContent": ["import React from 'react';\n\nimport '../styles/index.css';\n\nexport default function Index() {\n  return (\n    <main>\n      <h1>Hello World</h1>\n    </main>\n  );\n}", "import Page0, * as Page0Exports from '../../../pages/index';\n\nconst globalConfig = {\n  buildDir: \".poneglyph\\\\development\\\\browser\",\n  // app: undefined\n  // document: undefined\n  // error: undefined\n  // error404: undefined\n  // error500: undefined\n};\n    \nconst pages = [{\n  path: \"/\",\n  resourceID: '0',\n  entrypoint: 'index',\n  Component: Page0,\n  getPageData: Page0Exports.getPageData ?? undefined,\n}, {\n  path: \"/index\",\n  resourceID: '0',\n  entrypoint: 'index',\n  Component: Page0,\n  getPageData: Page0Exports.getPageData ?? undefined,\n}];\n\nimport { createServer } from 'poneglyph';\nimport http from 'http';\n\nhttp.createServer(createServer(globalConfig, pages)).listen(3000);\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;AAAA,mBAAkB;AAIH,iBAAiB;AAC9B,SACE,mDAAC,QAAD,MACE,mDAAC,MAAD,MAAI;AAAA;;;ACkBV,uBAA6B;AAC7B,kBAAiB;AAxBjB,IAAM,eAAe;AAAA,EACnB,UAAU;AAAA;AAHZ;AAWA,IAAM,QAAQ,CAAC;AAAA,EACb,MAAM;AAAA,EACN,YAAY;AAAA,EACZ,YAAY;AAAA,EACZ,WAAW;AAAA,EACX,aAAa,MAAa,WAAb,YAA4B;AAAA,GACxC;AAAA,EACD,MAAM;AAAA,EACN,YAAY;AAAA,EACZ,YAAY;AAAA,EACZ,WAAW;AAAA,EACX,aAAa,MAAa,WAAb,YAA4B;AAAA;AAM3C,oBAAK,aAAa,mCAAa,cAAc,QAAQ,OAAO;",
+  "names": []
+}
