@@ -27,6 +27,8 @@
 - [ ] Server-side code-splitting
 - [ ] Redirects
 
+More to add
+
 ## License
 
 MIT © [lxsmnsyc](https://github.com/lxsmnsyc)

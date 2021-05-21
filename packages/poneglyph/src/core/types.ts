@@ -2,7 +2,6 @@ import { Plugin } from 'esbuild';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ParsedUrlQuery } from 'querystring';
 import { ComponentType, ReactNode } from 'react';
-import { RouterParams } from './router';
 
 export interface Dictionary {
   [key: string]: string;
@@ -117,4 +116,8 @@ export interface PoneglyphData<
   pageData: PageData;
   params: P;
   query: Q;
+}
+
+export interface RouterParams {
+  [key: string]: string | string[];
 }

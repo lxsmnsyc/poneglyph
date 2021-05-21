@@ -46,4 +46,5 @@ export {
   GetPageDataResult,
   GetPageDataSuccess,
   ErrorProps,
+  RouterParams,
 } from './core/types';

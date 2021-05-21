@@ -1,6 +1,7 @@
 import DuplicateRouterPathError from './errors/DuplicateRouterPathError';
 import InvalidRouterSyntaxError from './errors/InvalidRouterSyntaxError';
 import SharedRouterPathError from './errors/SharedRouterPathError';
+import { RouterParams } from './types';
 
 export interface RouterNode<T> {
   key: string;
@@ -88,10 +89,6 @@ export function addRoute<T>(
     throw new InvalidRouterSyntaxError(lead);
   }
   addRouteToChildren(parent.normal);
-}
-
-export interface RouterParams {
-  [key: string]: string;
 }
 
 export interface RouterResult<T, P extends RouterParams = RouterParams> {
