@@ -154,6 +154,7 @@ export default async function buildServerBundle(
   artifactImportHeader.push(
     `
 const globalConfig = {
+  version: ${JSON.stringify(Date.now())},
   buildDir: ${JSON.stringify(path.join(options.buildDir, environment, 'browser'))},
   ${appPage ? `app: ${appPage},` : '// app: undefined'}
   ${documentPage ? `document: ${documentPage},` : '// document: undefined'}

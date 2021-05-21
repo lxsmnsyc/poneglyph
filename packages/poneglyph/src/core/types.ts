@@ -98,6 +98,7 @@ export interface ErrorPage {
 }
 
 export interface GlobalRenderOptions<AppData> {
+  version: string;
   buildDir: string;
   app?: AppPage<AppData>;
   document?: ComponentType;

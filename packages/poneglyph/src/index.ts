@@ -36,6 +36,10 @@ export {
   useRouteQuery,
 } from './components/PoneglyphData';
 export {
+  default as Link,
+  LinkProps,
+} from './components/Link';
+export {
   AppProps,
   GetPageData,
   GetPageDataNotFound,

@@ -6,6 +6,7 @@ export default function App({ Component }: AppProps): JSX.Element {
     <div
       style={{
         backgroundColor: 'black',
+        color: 'white',
       }}
     >
       <Component />

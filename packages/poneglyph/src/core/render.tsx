@@ -63,8 +63,8 @@ async function renderInternal<
       value={{
         ...result,
         data: stringify(result.data),
-        scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js`,
-        styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css`,
+        scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js?version=${global.version}`,
+        styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css?version=${global.version}`,
       }}
     >
       <DocumentComponent />
@@ -90,8 +90,8 @@ export function renderError<AppData, P extends Params = Params, Q extends Query 
       value={{
         ...result,
         data: stringify(result.data),
-        scriptURL: `/${STATIC_PATH}/${target}/${target}.js`,
-        styleURL: `/${STATIC_PATH}/${target}/${target}.css`,
+        scriptURL: `/${STATIC_PATH}/${target}/${target}.js?version=${global.version}`,
+        styleURL: `/${STATIC_PATH}/${target}/${target}.css?version=${global.version}`,
       }}
     >
       <DocumentComponent />

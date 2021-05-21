@@ -12,6 +12,5 @@ module.exports = {
         "devDependencies": ["**/*.test.tsx"]
       }
     ],
-    "react/jsx-props-no-spreading": "off"
   },
 };

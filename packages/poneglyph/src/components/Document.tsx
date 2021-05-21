@@ -25,8 +25,15 @@ export const DocumentHead: FC = ({ children }) => {
   const context = useContext(DocumentContext);
   return (
     <head>
+      <meta charSet="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       {children}
       {context?.head}
+      <link
+        rel="preload"
+        as="style"
+        href={context?.styleURL ?? ''}
+      />
       <link
         rel="stylesheet"
         href={context?.styleURL ?? ''}
@@ -78,10 +85,10 @@ export const DocumentScript: FC = () => {
   );
 };
 
-export const DocumentHtml: FC = ({ lang, ...props }: DetailedHTMLProps<
+export const DocumentHtml: FC<DetailedHTMLProps<
   HtmlHTMLAttributes<HTMLHtmlElement>,
   HTMLHtmlElement
->) => (
+>> = ({ lang, ...props }) => (
   <html
     {...props}
     lang={lang ?? 'en'}

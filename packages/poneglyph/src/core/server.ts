@@ -69,15 +69,17 @@ export default function createServer<AppData, PageData>(
         const path = await import('path');
         const mime = await import('mime-types');
 
-        const file = originalURL.substring(prefix.length);
+        const url = new URL(originalURL, `http://${host}`);
+        const file = url.pathname.substring(prefix.length);
         const targetFile = path.join(global.buildDir, file);
 
         const exists = await fileExists(targetFile);
         const mimeType = mime.contentType(path.basename(file));
         if (exists && mimeType) {
           const buffer = await fs.readFile(targetFile);
-          console.log('Serving file', originalURL, mimeType);
+          console.log('Serving file', url.pathname, mimeType);
           response.statusCode = 200;
+          response.setHeader('Cache-Control', 'max-age=31536000');
           response.setHeader('Content-Type', mimeType);
           response.end(buffer);
         } else {
