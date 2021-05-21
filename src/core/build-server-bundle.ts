@@ -13,6 +13,7 @@ import {
 import { getArtifactBaseDirectory } from './get-artifact-directory';
 import getPages from './get-pages';
 import getPOSIXPath from './get-posix-path';
+import readExternals from './read-externals';
 import resolveTSConfig from './resolve-tsconfig';
 import { BuildFullOptions } from './types';
 
@@ -30,6 +31,8 @@ export default async function buildServerBundle(
     environment,
     BUILD_OUTPUT.node.output,
   );
+
+  await fs.remove(outputDirectory);
 
   const artifactDirectory = await getArtifactBaseDirectory(
     options,
@@ -102,7 +105,7 @@ export default async function buildServerBundle(
       );
       const name = page.toUpperCase();
       artifactImportHeader.push(
-        `import ${name} from '${importPath}';`,
+        `import ${name}Component, * as ${name}Exports from '${importPath}';`,
       );
 
       return name;
@@ -110,11 +113,40 @@ export default async function buildServerBundle(
     return undefined;
   }
 
-  const appPage = await injectCustomPageImport(CUSTOM_APP);
+  async function injectCustomApp() {
+    const result = await injectCustomPageImport(CUSTOM_APP);
+
+    if (result) {
+      artifactImportHeader.push(
+        `const ${result} = () => ${result}Component`,
+      );
+
+      return result;
+    }
+    return undefined;
+  }
+
+  async function injectCustomErrorPage(page: string) {
+    const result = await injectCustomPageImport(page);
+
+    if (result) {
+      artifactImportHeader.push(
+        `const ${result} = {
+          Component: ${result}Component,
+          onError: ${result}Exports.onError,
+        }`,
+      );
+
+      return result;
+    }
+    return undefined;
+  }
+
+  const appPage = await injectCustomApp();
   const documentPage = await injectCustomPageImport(CUSTOM_DOCUMENT);
-  const error404 = await injectCustomPageImport(CUSTOM_404);
-  const error500 = await injectCustomPageImport(CUSTOM_500);
-  const errorPage = await injectCustomPageImport(CUSTOM_ERROR);
+  const error404 = await injectCustomErrorPage(CUSTOM_404);
+  const error500 = await injectCustomErrorPage(CUSTOM_500);
+  const errorPage = await injectCustomErrorPage(CUSTOM_ERROR);
 
   artifactImportHeader.push(
     `
@@ -198,15 +230,13 @@ http.createServer(createServer(globalConfig, pages)).listen(3000);
       ...options.env,
       'process.env.NODE_ENV': JSON.stringify(environment),
     },
-    external: [
-      'react',
-      'react-dom',
-      'poneglyph',
-    ],
+    plugins: options.plugins,
+    external: await readExternals(),
     tsconfig: await resolveTSConfig(options.tsconfig),
   });
 
   await fs.remove(artifact);
+  await fs.remove(artifactDirectory);
 
   await fs.outputFile(path.join(options.buildDir, 'index.js'), `
 if (process.env.NODE_ENV === 'production') {

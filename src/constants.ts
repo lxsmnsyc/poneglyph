@@ -51,4 +51,5 @@ export const DEFAULT_BUILD_OPTIONS: BuildFullOptions = {
   pagesDir: 'pages',
   target: 'es2017',
   env: {},
+  plugins: [],
 };

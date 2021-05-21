@@ -11,10 +11,10 @@ export default async function createBuild(config: BuildOptions): Promise<void> {
   };
 
   await Promise.all([
-    /* @__PURE__ */ createPagesMap(fullConfig),
-    /* @__PURE__ */ buildBrowserBundles(fullConfig, 'production'),
-    /* @__PURE__ */ buildBrowserBundles(fullConfig, 'development'),
-    /* @__PURE__ */ buildServerBundle(fullConfig, 'production'),
-    /* @__PURE__ */ buildServerBundle(fullConfig, 'development'),
+    createPagesMap(fullConfig),
+    buildBrowserBundles(fullConfig, 'production'),
+    buildBrowserBundles(fullConfig, 'development'),
+    buildServerBundle(fullConfig, 'production'),
+    buildServerBundle(fullConfig, 'development'),
   ]);
 }

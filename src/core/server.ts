@@ -1,11 +1,14 @@
 import { RequestListener } from 'http';
 import {
-  GlobalRenderOptions,
-  render, RenderContext, renderError, SSGOptions, SSROptions,
+  render,
+  renderError,
+  SSGOptions,
+  SSROptions,
 } from './render';
 import { addRoute, createRouterNode, matchRoute } from './router';
 import { PUBLIC_PATH, STATIC_PATH } from '../constants';
 import StatusCode from './errors/StatusCode';
+import { GlobalRenderOptions, ServerSideContext } from './types';
 
 export type ServerOptions<P> = (SSGOptions | SSROptions<P>)[];
 
@@ -19,12 +22,11 @@ export default function createServer<P>(
     addRoute(node, option.path.split('/'), option);
   });
 
-  return function (request, response) {
+  return function requestListener(request, response): void {
     function errorHandler(error: Error) {
       const statusCode = (error instanceof StatusCode) ? error.value : 500;
-      console.log(error);
       response.statusCode = statusCode;
-      const context: RenderContext = {
+      const context: ServerSideContext = {
         request,
         response,
         params: {},
@@ -47,8 +49,6 @@ export default function createServer<P>(
 
         const file = originalURL.substring(prefix.length);
         const targetFile = path.join(global.buildDir, file);
-
-        console.log(path.resolve(targetFile));
 
         try {
           const stat = await fs.stat(targetFile);
@@ -92,7 +92,7 @@ export default function createServer<P>(
 
           if (matchedNode && matchedNode.value) {
             const option = matchedNode.value;
-            const context: RenderContext = {
+            const context: ServerSideContext = {
               request,
               response,
               params: matchedNode.params,

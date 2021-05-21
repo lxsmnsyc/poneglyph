@@ -140,6 +140,8 @@ async function buildBrowserBundle(
     RESERVED_PAGES.includes(extensionLessFile) ? extensionLessFile : `${index}`,
   );
 
+  await fs.remove(outDir);
+
   const artifactDir = /* @__PURE__ */ await getArtifactDirectory(
     options,
     environment,
@@ -166,20 +168,25 @@ async function buildBrowserBundle(
 
   const appImport = (
     app
-      ? `import App from '${await getPOSIXPath(
+      ? `import AppComponent from '${await getPOSIXPath(
         path.relative(artifactDir, app),
-      )}';`
+      )}';
+const App = () => AppComponent;`
       : 'import { DefaultApp as App } from \'poneglyph\';'
   );
 
-  const error = await getErrorPage(options.pagesDir);
+  const error = await getFallbackPage(options.pagesDir);
 
   const errorImport = (
     error
-      ? `import ErrorPage from '${await getPOSIXPath(
+      ? `import ErrorPageComponent, { onError } from '${await getPOSIXPath(
         path.relative(artifactDir, error),
-      )}';`
-      : 'import { ErrorPage } from \'poneglyph\';'
+      )}';
+const ErrorPage = {
+  Component: ErrorPageComponent,
+  onError,
+}; `
+      : 'import { DefaultErrorPage as ErrorPage } from \'poneglyph\';'
   );
 
   await fs.outputFile(artifact, `
@@ -209,6 +216,9 @@ async function buildBrowserBundle(
       ...options.env,
       'process.env.NODE_ENV': JSON.stringify(environment),
     },
+    plugins: [
+      ...options.plugins,
+    ],
     external: (await import('module')).builtinModules,
     tsconfig: await resolveTSConfig(options.tsconfig),
   });
@@ -232,7 +242,7 @@ export default async function buildBrowserBundles(
     )),
   );
 
-  await fs.remove(/* @__PURE__ */ await getArtifactBaseDirectory(
+  await fs.remove(await getArtifactBaseDirectory(
     options,
     environment,
     'browser',

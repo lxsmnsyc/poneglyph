@@ -13,13 +13,11 @@ export {
   DocumentTail,
 } from './components/Document';
 export {
-  default as ErrorPage,
-  ErrorProps,
+  DefaultErrorComponent,
+  DefaultErrorPage,
 } from './components/Error';
 export {
-  default as DefaultApp,
-  AppProps,
-  AppComponent,
+  DefaultApp,
 } from './components/App';
 export {
   default as createServer,
@@ -30,9 +28,3 @@ export {
 export {
   default as hydrate,
 } from './core/hydrate';
-export {
-  GetServerSideProps,
-  GetServerSidePropsResult,
-  GetServerSidePropsNotFound,
-  GetServerSidePropsSuccess,
-} from './core/render';

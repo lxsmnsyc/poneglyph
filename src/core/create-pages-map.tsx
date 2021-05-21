@@ -8,7 +8,7 @@ export default async function createPagesMap(
   const fs = await import('fs-extra');
   const path = await import('path');
 
-  const pages = /* @__PURE__ */ await getPages(
+  const pages = await getPages(
     options.pagesDir,
   );
   const targetFile = path.join(

@@ -1,64 +1,25 @@
-import React, { ComponentType, ReactNode } from 'react';
+import React, { ComponentType } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { IncomingMessage, ServerResponse } from 'http';
 import { stringify } from 'ecmason';
-import { ParsedUrlQuery } from 'querystring';
 import {
   DefaultDocument,
   DocumentContext,
 } from '../components/Document';
-import { HeadContext } from '../components/Head';
-import { TailContext } from '../components/Tail';
-import ErrorPage, { ErrorProps } from '../components/Error';
-import DefaultApp, { AppComponent } from '../components/App';
-import { RouterParams } from './router';
+import { renderApp } from '../components/App';
 import {
-  CUSTOM_404,
-  CUSTOM_500,
-  CUSTOM_ERROR,
   STATIC_PATH,
 } from '../constants';
-import ErrorBoundary from '../components/ErrorBoundary';
-
-export type Params = RouterParams;
-export type Query = ParsedUrlQuery;
-
-export interface RenderContext<P extends Params = Params, Q extends Query = Query> {
-  request: IncomingMessage;
-  response: ServerResponse;
-  params: P;
-  query: Q;
-}
-
-export interface GetServerSidePropsSuccess<P> {
-  type: 'success';
-  value: P;
-}
-
-export interface GetServerSidePropsNotFound {
-  type: 'error';
-  value: number;
-}
-
-export type GetServerSidePropsResult<P> =
-  | GetServerSidePropsSuccess<P>
-  | GetServerSidePropsNotFound;
-
-export type GetServerSideProps<Props, P extends Params = Params, Q extends Query = Query> = (
-  (ctx: RenderContext<P, Q>) => (
-    | GetServerSidePropsResult<Props>
-    | Promise<GetServerSidePropsResult<Props>>
-  )
-);
-
-export interface GlobalRenderOptions {
-  buildDir: string;
-  app?: AppComponent;
-  document?: ComponentType;
-  error404?: ComponentType<ErrorProps>;
-  error500?: ComponentType<ErrorProps>;
-  error?: ComponentType<ErrorProps>;
-}
+import {
+  ErrorProps,
+  GetServerSideProps,
+  GetServerSidePropsResult,
+  GlobalRenderOptions,
+  Params,
+  Query,
+  ServerSideContext,
+} from './types';
+import StatusCode from './errors/StatusCode';
+import { getErrorPage, getErrorPath } from '../components/Error';
 
 export interface RenderBaseOptions {
   path: string;
@@ -80,61 +41,12 @@ interface RenderInternalProps<P> extends RenderBaseOptions {
   pageProps: P;
   Component: ComponentType<P>;
 }
-export interface RenderErrorProps {
-  statusCode: number;
-}
-
-export function getErrorComponent(
-  statusCode: number,
-  global: GlobalRenderOptions,
-): ComponentType<ErrorProps> {
-  if (statusCode === 404 && global.error404) {
-    return global.error404;
-  }
-  if (statusCode === 500 && global.error500) {
-    return global.error500;
-  }
-  if (global.error) {
-    return global.error;
-  }
-  return ErrorPage;
-}
-
-export function getErrorPath(
-  statusCode: number,
-  global: GlobalRenderOptions,
-): string {
-  if (statusCode === 404 && global.error404) {
-    return CUSTOM_404;
-  }
-  if (statusCode === 500 && global.error500) {
-    return CUSTOM_500;
-  }
-  return CUSTOM_ERROR;
-}
 
 function renderInternal<P>(
   global: GlobalRenderOptions,
   options: RenderInternalProps<P>,
 ): string {
-  const App = global.app ?? DefaultApp;
-  const CustomError = getErrorComponent(500, global);
-
-  const collectedHead: ReactNode[] = [];
-  const collectedTail: ReactNode[] = [];
-
-  const result = ReactDOMServer.renderToString((
-    <ErrorBoundary fallback={<CustomError statusCode={500} />}>
-      <HeadContext.Provider value={collectedHead}>
-        <TailContext.Provider value={collectedTail}>
-          <App
-            Component={options.Component}
-            pageProps={options.pageProps}
-          />
-        </TailContext.Provider>
-      </HeadContext.Provider>
-    </ErrorBoundary>
-  ));
+  const result = renderApp(global, options);
 
   const flag = '<!DOCTYPE html>';
 
@@ -143,9 +55,7 @@ function renderInternal<P>(
   return flag + ReactDOMServer.renderToString((
     <DocumentContext.Provider
       value={{
-        html: result,
-        head: collectedHead,
-        tail: collectedTail,
+        ...result,
         data: stringify(options.pageProps),
         scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js`,
         styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css`,
@@ -157,22 +67,22 @@ function renderInternal<P>(
 }
 
 export function renderError<P extends Params = Params, Q extends Query = Query>(
-  ctx: RenderContext<P, Q>,
+  ctx: ServerSideContext<P, Q>,
   global: GlobalRenderOptions,
-  options: RenderErrorProps,
+  options: ErrorProps,
 ): string {
   const target = getErrorPath(options.statusCode, global);
   return renderInternal(global, {
     path: `/${target}`,
     resourceID: target,
     entrypoint: target,
-    Component: getErrorComponent(options.statusCode, global),
+    Component: getErrorPage(options.statusCode, global).Component,
     pageProps: { statusCode: options.statusCode },
   });
 }
 
 export function renderSSG<P extends Params = Params, Q extends Query = Query>(
-  ctx: RenderContext<P, Q>,
+  ctx: ServerSideContext<P, Q>,
   global: GlobalRenderOptions,
   options: SSGOptions,
 ): string {
@@ -183,7 +93,7 @@ export function renderSSG<P extends Params = Params, Q extends Query = Query>(
 }
 
 export async function renderSSR<Props, P extends Params = Params, Q extends Query = Query>(
-  ctx: RenderContext<P, Q>,
+  ctx: ServerSideContext<P, Q>,
   global: GlobalRenderOptions,
   options: SSROptions<Props>,
 ): Promise<string> {
@@ -196,17 +106,13 @@ export async function renderSSR<Props, P extends Params = Params, Q extends Quer
     });
   }
   if (data.type === 'error') {
-    return renderError(ctx, global, {
-      statusCode: data.value,
-    });
+    throw new StatusCode(data.value);
   }
-  return renderError(ctx, global, {
-    statusCode: 500,
-  });
+  throw new StatusCode(500);
 }
 
 export async function render<Props, P extends Params = Params, Q extends Query = Query>(
-  ctx: RenderContext<P, Q>,
+  ctx: ServerSideContext<P, Q>,
   global: GlobalRenderOptions,
   options: SSGOptions | SSROptions<Props>,
 ): Promise<string> {

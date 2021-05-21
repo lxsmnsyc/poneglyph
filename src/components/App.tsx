@@ -1,14 +1,56 @@
-import React, { ComponentType } from 'react';
+import React, { ComponentType, ReactNode } from 'react';
+import ReactDOMServer from 'react-dom/server';
+import {
+  AppPage,
+  AppProps,
+  AppRenderResult,
+  GlobalRenderOptions,
+} from '../core/types';
+import { getErrorPage } from './Error';
+import ErrorBoundary from './ErrorBoundary';
+import { HeadContext } from './Head';
+import { TailContext } from './Tail';
 
-export interface AppProps<P> {
-  Component: ComponentType<P>;
-  pageProps: P;
+export function DefaultApp<P>() {
+  return ({ Component, pageProps }: AppProps<P>): JSX.Element => (
+    <Component {...pageProps} />
+  );
 }
 
-export type AppComponent = <P>(props: AppProps<P>) => JSX.Element;
+export interface RenderAppOptions<P> {
+  pageProps: P;
+  Component: ComponentType<P>;
+}
 
-const DefaultApp: AppComponent = ({ Component, pageProps }) => (
-  <Component {...pageProps} />
-);
+export function renderApp<PageProps>(
+  global: GlobalRenderOptions,
+  options: RenderAppOptions<PageProps>,
+): AppRenderResult {
+  const CustomAppPage: AppPage = global.app ?? DefaultApp;
+  const CustomApp = CustomAppPage<PageProps>();
+  const CustomErrorPage = getErrorPage(500, global);
 
-export default DefaultApp;
+  const head: ReactNode[] = [];
+  const tail: ReactNode[] = [];
+
+  const html = ReactDOMServer.renderToString((
+    <ErrorBoundary
+      fallback={<CustomErrorPage.Component statusCode={500} />}
+    >
+      <HeadContext.Provider value={head}>
+        <TailContext.Provider value={tail}>
+          <CustomApp
+            Component={options.Component}
+            pageProps={options.pageProps}
+          />
+        </TailContext.Provider>
+      </HeadContext.Provider>
+    </ErrorBoundary>
+  ));
+
+  return {
+    html,
+    head,
+    tail,
+  };
+}
