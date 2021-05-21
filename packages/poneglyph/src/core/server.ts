@@ -75,6 +75,9 @@ export default function createServer<AppData, PageData>(
 
         const exists = await fileExists(targetFile);
         const mimeType = mime.contentType(path.basename(file));
+
+        console.log(targetFile);
+
         if (exists && mimeType) {
           const buffer = await fs.readFile(targetFile);
           console.log('Serving file', url.pathname, mimeType);
@@ -86,14 +89,14 @@ export default function createServer<AppData, PageData>(
           throw new StatusCode(404);
         }
       };
-      const staticPrefix = `/${STATIC_PATH}/`;
-      if (originalURL.startsWith(staticPrefix)) {
-        readStaticFile(staticPrefix, global.buildDir).catch(errorHandler);
-        return;
-      }
       const publicPrefix = `/${PUBLIC_PATH}/`;
       if (originalURL.startsWith(publicPrefix)) {
         readStaticFile(publicPrefix, global.publicDir).catch(errorHandler);
+        return;
+      }
+      const staticPrefix = `/${STATIC_PATH}/`;
+      if (originalURL.startsWith(staticPrefix)) {
+        readStaticFile(staticPrefix, global.buildDir).catch(errorHandler);
         return;
       }
       const getContent = async (): Promise<string> => {

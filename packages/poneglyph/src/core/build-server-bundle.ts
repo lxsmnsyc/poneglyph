@@ -156,7 +156,7 @@ export default async function buildServerBundle(
 const globalConfig = {
   version: ${JSON.stringify(Date.now())},
   buildDir: ${JSON.stringify(path.join(options.buildDir, environment, 'browser'))},
-  publicDir: ${JSON.stringify(path.relative(artifactDirectory, path.join(process.cwd(), options.publicDir)))},
+  publicDir: ${JSON.stringify(options.publicDir)},
   ${appPage ? `app: ${appPage},` : '// app: undefined'}
   ${documentPage ? `document: ${documentPage},` : '// document: undefined'}
   ${errorPage ? `error: ${errorPage},` : '// error: undefined'}
