@@ -49,6 +49,8 @@ export const BUILD_OUTPUT = {
 export const DEFAULT_BUILD_OPTIONS: BuildFullOptions = {
   buildDir: '.poneglyph',
   pagesDir: 'pages',
+  publicDir: 'public',
+  apiDir: 'api',
   target: 'es2017',
   env: {},
   plugins: [],

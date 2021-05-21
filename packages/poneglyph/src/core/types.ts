@@ -10,6 +10,8 @@ export interface Dictionary {
 export interface BuildFullOptions {
   buildDir: string;
   pagesDir: string;
+  apiDir: string;
+  publicDir: string;
   target: string;
   env: Dictionary;
   plugins: Plugin[];
@@ -99,6 +101,7 @@ export interface ErrorPage {
 export interface GlobalRenderOptions<AppData> {
   version: string;
   buildDir: string;
+  publicDir: string;
   app?: AppPage<AppData>;
   document?: ComponentType;
   error404?: ErrorPage;

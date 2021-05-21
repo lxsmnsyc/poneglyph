@@ -64,14 +64,14 @@ export default function createServer<AppData, PageData>(
     const originalURL = request.url;
 
     if (host && originalURL) {
-      const readStaticFile = async (prefix: string) => {
+      const readStaticFile = async (prefix: string, basePath: string) => {
         const fs = await import('fs-extra');
         const path = await import('path');
         const mime = await import('mime-types');
 
         const url = new URL(originalURL, `http://${host}`);
         const file = url.pathname.substring(prefix.length);
-        const targetFile = path.join(global.buildDir, file);
+        const targetFile = path.join(basePath, file);
 
         const exists = await fileExists(targetFile);
         const mimeType = mime.contentType(path.basename(file));
@@ -88,12 +88,12 @@ export default function createServer<AppData, PageData>(
       };
       const staticPrefix = `/${STATIC_PATH}/`;
       if (originalURL.startsWith(staticPrefix)) {
-        readStaticFile(staticPrefix).catch(errorHandler);
+        readStaticFile(staticPrefix, global.buildDir).catch(errorHandler);
         return;
       }
       const publicPrefix = `/${PUBLIC_PATH}/`;
       if (originalURL.startsWith(publicPrefix)) {
-        readStaticFile(publicPrefix).catch(errorHandler);
+        readStaticFile(publicPrefix, global.publicDir).catch(errorHandler);
         return;
       }
       const getContent = async (): Promise<string> => {
