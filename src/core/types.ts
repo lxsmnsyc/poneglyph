@@ -34,61 +34,86 @@ export interface ServerSideContext<P extends Params = Params, Q extends Query = 
 /**
  * App Types
  */
-export interface AppProps<P> {
-  Component: ComponentType<P>;
-  pageProps: P;
+export interface AppProps {
+  Component: ComponentType;
 }
 
-export type App<P> = ComponentType<AppProps<P>>;
+export type App = ComponentType<AppProps>;
 
-export type AppPage = <P>() => App<P>;
+export interface AppSSGPage {
+  Component: App;
+  getAppData?: undefined;
+}
 
-export interface AppRenderResult {
+export interface AppSSRPage<P> {
+  Component: App;
+  getAppData: (ctx: ServerSideContext) => P | Promise<P>;
+}
+
+export type AppPage<P> = AppSSGPage | AppSSRPage<P>;
+
+export interface AppRenderResult<
+  AppData,
+  PageData,
+  P extends Params = Params,
+  Q extends Query = Query
+> {
   head: ReactNode[];
   tail: ReactNode[];
   html: string;
+  data: PoneglyphData<AppData, PageData, P, Q>;
 }
 
-export interface GetServerSidePropsSuccess<P> {
+export interface GetPageDataSuccess<P> {
   type: 'success';
   value: P;
 }
 
-export interface GetServerSidePropsNotFound {
+export interface GetPageDataNotFound {
   type: 'error';
   value: number;
 }
 
-export type GetServerSidePropsResult<P> =
-  | GetServerSidePropsSuccess<P>
-  | GetServerSidePropsNotFound;
+export type GetPageDataResult<P> =
+  | GetPageDataSuccess<P>
+  | GetPageDataNotFound;
 
-export type GetServerSideProps<Props, P extends Params = Params, Q extends Query = Query> = (
+export type GetPageData<PageData, P extends Params = Params, Q extends Query = Query> = (
   (ctx: ServerSideContext<P, Q>) => (
-    | GetServerSidePropsResult<Props>
-    | Promise<GetServerSidePropsResult<Props>>
+    | GetPageDataResult<PageData>
+    | Promise<GetPageDataResult<PageData>>
   )
 );
 
 /**
  * Error Page related
  */
-export interface ErrorProps {
+export interface ErrorData {
   statusCode: number;
 }
 
-export type ErrorComponent = ComponentType<ErrorProps>;
-
 export interface ErrorPage {
   onError?: (error: Error) => void;
-  Component: ErrorComponent;
+  Component: ComponentType<ErrorData>;
 }
 
-export interface GlobalRenderOptions {
+export interface GlobalRenderOptions<AppData> {
   buildDir: string;
-  app?: AppPage;
+  app?: AppPage<AppData>;
   document?: ComponentType;
   error404?: ErrorPage;
   error500?: ErrorPage;
   error?: ErrorPage;
+}
+
+export interface PoneglyphData<
+  AppData,
+  PageData,
+  P extends Params = Params,
+  Q extends Query = Query
+> {
+  appData: AppData;
+  pageData: PageData;
+  params: P;
+  query: Q;
 }

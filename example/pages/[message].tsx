@@ -1,4 +1,4 @@
-import { GetServerSideProps, Head } from 'poneglyph';
+import { GetPageData, Head, usePageData } from 'poneglyph';
 import React from 'react';
 
 import '../styles/index.css';
@@ -11,14 +11,15 @@ interface Props {
   message: string;
 }
 
-export const getServerSideProps: GetServerSideProps<Props, Params> = (ctx) => ({
+export const getPageData: GetPageData<Props, Params> = (ctx) => ({
   type: 'success',
   value: {
     message: ctx.params.message,
   },
 });
 
-export default function Example({ message }: Props) {
+export default function Example() {
+  const { message } = usePageData<Props>();
   return (
     <main>
       <Head>

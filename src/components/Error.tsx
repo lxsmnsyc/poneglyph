@@ -1,11 +1,22 @@
 import { getReasonPhrase } from 'http-status-codes';
-import React, { ComponentType, FC } from 'react';
+import React, { FC, ReactNode } from 'react';
+import ReactDOMServer from 'react-dom/server';
 import { CUSTOM_404, CUSTOM_500, CUSTOM_ERROR } from '../constants';
-import { ErrorPage, ErrorProps, GlobalRenderOptions } from '../core/types';
+import {
+  ErrorPage,
+  ErrorData,
+  GlobalRenderOptions,
+  AppRenderResult,
+  Params,
+  Query,
+  ServerSideContext,
+} from '../core/types';
+import ErrorBoundary from './ErrorBoundary';
 
-import Head from './Head';
+import Head, { HeadContext } from './Head';
+import { TailContext } from './Tail';
 
-export const DefaultErrorComponent: FC<ErrorProps> = ({ statusCode }) => {
+export const DefaultErrorComponent: FC<ErrorData> = ({ statusCode }) => {
   const phrase = getReasonPhrase(statusCode);
 
   return (
@@ -51,9 +62,9 @@ export const DefaultErrorPage: ErrorPage = {
   Component: DefaultErrorComponent,
 };
 
-export function getErrorPage(
+export function getErrorPage<AppData>(
   statusCode: number,
-  global: GlobalRenderOptions,
+  global: GlobalRenderOptions<AppData>,
 ): ErrorPage {
   if (statusCode === 404 && global.error404) {
     return global.error404;
@@ -67,9 +78,9 @@ export function getErrorPage(
   return DefaultErrorPage;
 }
 
-export function getErrorPath(
+export function getErrorPath<AppData>(
   statusCode: number,
-  global: GlobalRenderOptions,
+  global: GlobalRenderOptions<AppData>,
 ): string {
   if (statusCode === 404 && global.error404) {
     return CUSTOM_404;
@@ -78,4 +89,41 @@ export function getErrorPath(
     return CUSTOM_500;
   }
   return CUSTOM_ERROR;
+}
+
+export function renderStaticError<AppData, P extends Params = Params, Q extends Query = Query>(
+  ctx: ServerSideContext<P, Q>,
+  global: GlobalRenderOptions<AppData>,
+  options: ErrorData,
+): AppRenderResult<AppData, ErrorData, P, Q> {
+  const CustomErrorPage = getErrorPage(options.statusCode, global);
+
+  const head: ReactNode[] = [];
+  const tail: ReactNode[] = [];
+
+  const html = ReactDOMServer.renderToString((
+    <ErrorBoundary
+      fallback={<DefaultErrorComponent statusCode={500} />}
+    >
+      <HeadContext.Provider value={head}>
+        <TailContext.Provider value={tail}>
+          <CustomErrorPage.Component
+            statusCode={options.statusCode}
+          />
+        </TailContext.Provider>
+      </HeadContext.Provider>
+    </ErrorBoundary>
+  ));
+
+  return {
+    html,
+    head,
+    tail,
+    data: {
+      appData: {} as AppData,
+      pageData: options,
+      params: ctx.params,
+      query: ctx.query,
+    },
+  };
 }

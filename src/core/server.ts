@@ -25,11 +25,11 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-export default function createServer<P>(
-  global: GlobalRenderOptions,
-  options: ServerOptions<P>,
+export default function createServer<AppData, PageData>(
+  global: GlobalRenderOptions<AppData>,
+  options: ServerOptions<PageData>,
 ): RequestListener {
-  const node = createRouterNode<SSGOptions | SSROptions<P>>('');
+  const node = createRouterNode<SSGOptions | SSROptions<PageData>>('');
 
   options.forEach((option) => {
     addRoute(node, option.path.split('/'), option);
@@ -47,9 +47,15 @@ export default function createServer<P>(
         }
       }
 
+      const context: ServerSideContext = {
+        request,
+        response,
+        params: {},
+        query: {},
+      };
       response.statusCode = statusCode;
       response.setHeader('Content-Type', 'text/html');
-      response.end(renderError(global, {
+      response.end(renderError(context, global, {
         statusCode,
       }));
     }

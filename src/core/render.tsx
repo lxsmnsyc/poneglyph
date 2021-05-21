@@ -10,16 +10,16 @@ import {
   STATIC_PATH,
 } from '../constants';
 import {
-  ErrorProps,
-  GetServerSideProps,
-  GetServerSidePropsResult,
+  ErrorData,
+  GetPageData,
+  GetPageDataResult,
   GlobalRenderOptions,
   Params,
   Query,
   ServerSideContext,
 } from './types';
 import StatusCode from './errors/StatusCode';
-import { getErrorPage, getErrorPath } from '../components/Error';
+import { getErrorPath, renderStaticError } from '../components/Error';
 
 export interface RenderBaseOptions {
   path: string;
@@ -28,25 +28,31 @@ export interface RenderBaseOptions {
 }
 
 export interface SSROptions<P> extends RenderBaseOptions {
-  getServerSideProps: GetServerSideProps<P>;
-  Component: ComponentType<P>;
+  getPageData: GetPageData<P>;
+  Component: ComponentType;
 }
 
 export interface SSGOptions extends RenderBaseOptions {
-  getServerSideProps?: undefined;
+  getPageData?: undefined;
   Component: ComponentType;
 }
 
 interface RenderInternalProps<P> extends RenderBaseOptions {
   pageProps: P;
-  Component: ComponentType<P>;
+  Component: ComponentType;
 }
 
-function renderInternal<P>(
-  global: GlobalRenderOptions,
-  options: RenderInternalProps<P>,
-): string {
-  const result = renderApp(global, options);
+async function renderInternal<
+  AppData,
+  PageData,
+  P extends Params = Params,
+  Q extends Query = Query
+>(
+  ctx: ServerSideContext<P, Q>,
+  global: GlobalRenderOptions<AppData>,
+  options: RenderInternalProps<PageData>,
+): Promise<string> {
+  const result = await renderApp(ctx, global, options);
 
   const flag = '<!DOCTYPE html>';
 
@@ -56,7 +62,7 @@ function renderInternal<P>(
     <DocumentContext.Provider
       value={{
         ...result,
-        data: stringify(options.pageProps),
+        data: stringify(result.data),
         scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js`,
         styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css`,
       }}
@@ -66,40 +72,58 @@ function renderInternal<P>(
   ));
 }
 
-export function renderError(
-  global: GlobalRenderOptions,
-  options: ErrorProps,
+export function renderError<AppData, P extends Params = Params, Q extends Query = Query>(
+  ctx: ServerSideContext<P, Q>,
+  global: GlobalRenderOptions<AppData>,
+  options: ErrorData,
 ): string {
   const target = getErrorPath(options.statusCode, global);
-  return renderInternal(global, {
-    path: `/${target}`,
-    resourceID: target,
-    entrypoint: target,
-    Component: getErrorPage(options.statusCode, global).Component,
-    pageProps: { statusCode: options.statusCode },
-  });
+
+  const result = renderStaticError(ctx, global, options);
+
+  const flag = '<!DOCTYPE html>';
+
+  const DocumentComponent = global.document ?? DefaultDocument;
+
+  return flag + ReactDOMServer.renderToString((
+    <DocumentContext.Provider
+      value={{
+        ...result,
+        data: stringify(result.data),
+        scriptURL: `/${STATIC_PATH}/${target}/${target}.js`,
+        styleURL: `/${STATIC_PATH}/${target}/${target}.css`,
+      }}
+    >
+      <DocumentComponent />
+    </DocumentContext.Provider>
+  ));
 }
 
-export function renderSSG<P extends Params = Params, Q extends Query = Query>(
+export function renderSSG<AppData, P extends Params = Params, Q extends Query = Query>(
   ctx: ServerSideContext<P, Q>,
-  global: GlobalRenderOptions,
+  global: GlobalRenderOptions<AppData>,
   options: SSGOptions,
-): string {
-  return renderInternal(global, {
+): Promise<string> {
+  return renderInternal(ctx, global, {
     ...options,
     pageProps: {},
   });
 }
 
-export async function renderSSR<Props, P extends Params = Params, Q extends Query = Query>(
+export async function renderSSR<
+  AppData,
+  PageData,
+  P extends Params = Params,
+  Q extends Query = Query
+>(
   ctx: ServerSideContext<P, Q>,
-  global: GlobalRenderOptions,
-  options: SSROptions<Props>,
+  global: GlobalRenderOptions<AppData>,
+  options: SSROptions<PageData>,
 ): Promise<string> {
-  const data: GetServerSidePropsResult<Props> = await options.getServerSideProps(ctx);
+  const data: GetPageDataResult<PageData> = await options.getPageData(ctx);
 
   if (data.type === 'success') {
-    return renderInternal(global, {
+    return renderInternal(ctx, global, {
       ...options,
       pageProps: data.value,
     });
@@ -110,12 +134,17 @@ export async function renderSSR<Props, P extends Params = Params, Q extends Quer
   throw new StatusCode(500);
 }
 
-export async function render<Props, P extends Params = Params, Q extends Query = Query>(
+export async function render<
+  AppData,
+  PageData,
+  P extends Params = Params,
+  Q extends Query = Query,
+>(
   ctx: ServerSideContext<P, Q>,
-  global: GlobalRenderOptions,
-  options: SSGOptions | SSROptions<Props>,
+  global: GlobalRenderOptions<AppData>,
+  options: SSGOptions | SSROptions<PageData>,
 ): Promise<string> {
-  if (options.getServerSideProps) {
+  if (options.getPageData) {
     return renderSSR(ctx, global, options);
   }
   return renderSSG(ctx, global, options);

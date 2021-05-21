@@ -118,7 +118,10 @@ export default async function buildServerBundle(
 
     if (result) {
       artifactImportHeader.push(
-        `const ${result} = () => ${result}Component`,
+        `const ${result} = {
+          Component: ${result}Component,
+          getAppData: ${result}Exports.getAppData ?? undefined,
+        }`,
       );
 
       return result;
@@ -133,7 +136,7 @@ export default async function buildServerBundle(
       artifactImportHeader.push(
         `const ${result} = {
           Component: ${result}Component,
-          onError: ${result}Exports.onError,
+          onError: ${result}Exports.onError ?? undefined,
         }`,
       );
 
@@ -177,7 +180,7 @@ const globalConfig = {
   resourceID: '${index}',
   entrypoint: '${filename}',
   Component: Page${index},
-  getServerSideProps: Page${index}Exports.getServerSideProps ?? undefined,
+  getPageData: Page${index}Exports.getPageData ?? undefined,
 }`;
     if (filename === DIRECTORY_ROOT) {
       return `{
@@ -185,7 +188,7 @@ const globalConfig = {
   resourceID: '${index}',
   entrypoint: '${filename}',
   Component: Page${index},
-  getServerSideProps: Page${index}Exports.getServerSideProps ?? undefined,
+  getPageData: Page${index}Exports.getPageData ?? undefined,
 }, ${output}`;
     }
 

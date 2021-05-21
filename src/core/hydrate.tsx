@@ -3,12 +3,24 @@ import ReactDOM from 'react-dom';
 import { parse } from 'ecmason';
 import { DOCUMENT_DATA, DOCUMENT_MAIN_ROOT } from '../constants';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { AppPage, ErrorPage } from './types';
+import {
+  AppPage,
+  ErrorPage,
+  Params,
+  PoneglyphData,
+  Query,
+} from './types';
+import { PoneglyphDataContext } from '../components/PoneglyphData';
 
-export default function hydrate<P>(
-  CustomAppPage: AppPage,
+export default function hydrate<
+  AppData,
+  PageData,
+  P extends Params = Params,
+  Q extends Query = Query
+>(
+  CustomAppPage: AppPage<AppData>,
   CustomErrorPage: ErrorPage,
-  Component: ComponentType<P>,
+  Component: ComponentType,
 ): void {
   const dataSource = document.getElementById(DOCUMENT_DATA);
 
@@ -16,19 +28,20 @@ export default function hydrate<P>(
     throw new Error('missing DOCUMENT_DATA');
   }
 
-  const parsedData = parse<P>(dataSource.textContent || '');
-
-  const CustomApp = CustomAppPage<P>();
+  const parsedData = parse<PoneglyphData<AppData, PageData, P, Q>>(
+    dataSource.textContent || '{}',
+  );
 
   ReactDOM.hydrate((
     <ErrorBoundary
       fallback={<CustomErrorPage.Component statusCode={500} />}
       onError={CustomErrorPage.onError}
     >
-      <CustomApp
-        Component={Component}
-        pageProps={parsedData}
-      />
+      <PoneglyphDataContext.Provider value={parsedData}>
+        <CustomAppPage.Component
+          Component={Component}
+        />
+      </PoneglyphDataContext.Provider>
     </ErrorBoundary>
   ), document.getElementById(DOCUMENT_MAIN_ROOT));
 }

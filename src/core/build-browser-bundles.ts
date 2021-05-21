@@ -168,10 +168,13 @@ async function buildBrowserBundle(
 
   const appImport = (
     app
-      ? `import AppComponent from '${await getPOSIXPath(
+      ? `import AppComponent, * as AppExports from '${await getPOSIXPath(
         path.relative(artifactDir, app),
       )}';
-const App = () => AppComponent;`
+const App = {
+  Component: AppComponent,
+  getAppData: AppExports.getAppData ?? undefined,
+};`
       : 'import { DefaultApp as App } from \'poneglyph\';'
   );
 
@@ -179,12 +182,12 @@ const App = () => AppComponent;`
 
   const errorImport = (
     error
-      ? `import ErrorPageComponent, { onError } from '${await getPOSIXPath(
+      ? `import ErrorPageComponent, * as ErrorPageExports from '${await getPOSIXPath(
         path.relative(artifactDir, error),
       )}';
 const ErrorPage = {
   Component: ErrorPageComponent,
-  onError,
+  onError: ErrorPageExports.onError ?? undefined,
 }; `
       : 'import { DefaultErrorPage as ErrorPage } from \'poneglyph\';'
   );
