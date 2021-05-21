@@ -9,8 +9,21 @@ import { addRoute, createRouterNode, matchRoute } from './router';
 import { PUBLIC_PATH, STATIC_PATH } from '../constants';
 import StatusCode from './errors/StatusCode';
 import { GlobalRenderOptions, ServerSideContext } from './types';
+import { getErrorPage } from '../components/Error';
 
 export type ServerOptions<P> = (SSGOptions | SSROptions<P>)[];
+
+async function fileExists(path: string): Promise<boolean> {
+  const fs = await import('fs-extra');
+
+  try {
+    const stat = await fs.stat(path);
+
+    return stat.isFile();
+  } catch (error) {
+    return false;
+  }
+}
 
 export default function createServer<P>(
   global: GlobalRenderOptions,
@@ -25,15 +38,18 @@ export default function createServer<P>(
   return function requestListener(request, response): void {
     function errorHandler(error: Error) {
       const statusCode = (error instanceof StatusCode) ? error.value : 500;
+      const reason = (error instanceof StatusCode) ? error.reason : error;
+
+      if (reason) {
+        const { onError } = getErrorPage(statusCode, global);
+        if (onError) {
+          onError(reason);
+        }
+      }
+
       response.statusCode = statusCode;
-      const context: ServerSideContext = {
-        request,
-        response,
-        params: {},
-        query: {},
-      };
       response.setHeader('Content-Type', 'text/html');
-      response.end(renderError(context, global, {
+      response.end(renderError(global, {
         statusCode,
       }));
     }
@@ -50,24 +66,16 @@ export default function createServer<P>(
         const file = originalURL.substring(prefix.length);
         const targetFile = path.join(global.buildDir, file);
 
-        try {
-          const stat = await fs.stat(targetFile);
-          const mimeType = mime.contentType(path.basename(file));
-          if (stat.isFile() && mimeType) {
-            const buffer = await fs.readFile(targetFile);
-            console.log('Serving file', originalURL, mimeType);
-            response.statusCode = 200;
-            response.setHeader('Content-Type', mimeType);
-            response.end(buffer);
-          } else {
-            throw new StatusCode(404);
-          }
-        } catch (error) {
-          if (error instanceof StatusCode) {
-            throw error;
-          } else {
-            throw new StatusCode(404);
-          }
+        const exists = await fileExists(targetFile);
+        const mimeType = mime.contentType(path.basename(file));
+        if (exists && mimeType) {
+          const buffer = await fs.readFile(targetFile);
+          console.log('Serving file', originalURL, mimeType);
+          response.statusCode = 200;
+          response.setHeader('Content-Type', mimeType);
+          response.end(buffer);
+        } else {
+          throw new StatusCode(404);
         }
       };
       const staticPrefix = `/${STATIC_PATH}/`;
@@ -108,7 +116,7 @@ export default function createServer<P>(
           if (error instanceof StatusCode) {
             throw error;
           } else {
-            throw new StatusCode(500);
+            throw new StatusCode(500, error);
           }
         }
       };

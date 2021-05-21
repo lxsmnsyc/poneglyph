@@ -66,8 +66,7 @@ function renderInternal<P>(
   ));
 }
 
-export function renderError<P extends Params = Params, Q extends Query = Query>(
-  ctx: ServerSideContext<P, Q>,
+export function renderError(
   global: GlobalRenderOptions,
   options: ErrorProps,
 ): string {
