@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useDebugValue } from 'react';
 import { Params, PoneglyphData, Query } from '../core/types';
 
 export const PoneglyphDataContext = (
@@ -17,21 +17,31 @@ export function usePoneglyphData<
     throw new Error('Missing poneglyph data');
   }
 
+  useDebugValue(data);
+
   return data as PoneglyphData<AppData, PageData, P, Q>;
 }
 
 export function useAppData<AppData>(): AppData {
-  return usePoneglyphData<AppData, any, any, any>().appData;
+  const data = usePoneglyphData<AppData, any, any, any>().appData;
+  useDebugValue(data);
+  return data;
 }
 
 export function usePageData<PageData>(): PageData {
-  return usePoneglyphData<any, PageData, any, any>().pageData;
+  const data = usePoneglyphData<any, PageData, any, any>().pageData;
+  useDebugValue(data);
+  return data;
 }
 
 export function useRouteParams<P extends Params = Params>(): P {
-  return usePoneglyphData<any, any, P, any>().params;
+  const data = usePoneglyphData<any, any, P, any>().params;
+  useDebugValue(data);
+  return data;
 }
 
 export function useRouteQuery<Q extends Query = Query>(): Q {
-  return usePoneglyphData<any, any, any, Q>().query;
+  const data = usePoneglyphData<any, any, any, Q>().query;
+  useDebugValue(data);
+  return data;
 }
