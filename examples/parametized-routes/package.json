@@ -4,7 +4,8 @@
   "version": "0.1.1",
   "scripts": {
     "serve": "node ./.poneglyph",
-    "build": "node build-src"
+    "build": "node build-src",
+    "dev": "node build-src && node ./.poneglyph"
   },
   "dependencies": {
     "poneglyph": "0.1.1",
