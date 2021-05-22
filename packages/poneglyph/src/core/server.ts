@@ -36,6 +36,54 @@ export default function createServer<AppData, PageData>(
   });
 
   return function requestListener(request, response): void {
+    async function responseEnd(type: string, content: string | Buffer): Promise<void> {
+      const zlib = await import('zlib');
+      let output = content;
+      if (global.enableCompression) {
+        const encoding = request.headers['accept-encoding'];
+        if (encoding) {
+          if (encoding.includes('br')) {
+            response.setHeader('Content-Encoding', 'br');
+            output = await new Promise((resolve, reject) => {
+              zlib.brotliCompress(content, {}, (err, result) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(result);
+                }
+              });
+            });
+          } else if (encoding.includes('gzip')) {
+            response.setHeader('Content-Encoding', 'gzip');
+            output = await new Promise((resolve, reject) => {
+              zlib.gzip(content, {}, (err, result) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(result);
+                }
+              });
+            });
+          } else if (encoding.includes('deflate')) {
+            response.setHeader('Content-Encoding', 'deflate');
+            output = await new Promise((resolve, reject) => {
+              zlib.deflate(content, {}, (err, result) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(result);
+                }
+              });
+            });
+          }
+          //  else if (encoding.includes('compress')) {
+          //   response.setHeader('Content-Encoding', 'compress');
+          // }
+        }
+      }
+      response.setHeader('Content-Type', type);
+      response.end(output);
+    }
     function errorHandler(error: Error) {
       const statusCode = (error instanceof StatusCode) ? error.value : 500;
       const reason = (error instanceof StatusCode) ? error.reason : error;
@@ -54,10 +102,14 @@ export default function createServer<AppData, PageData>(
         query: {},
       };
       response.statusCode = statusCode;
-      response.setHeader('Content-Type', 'text/html');
-      response.end(renderError(context, global, {
+      responseEnd('text/html', renderError(context, global, {
         statusCode,
-      }));
+      })).catch((err) => {
+        const { onError } = getErrorPage(statusCode, global);
+        if (onError) {
+          onError(err);
+        }
+      });
     }
 
     const { host } = request.headers;
@@ -83,8 +135,12 @@ export default function createServer<AppData, PageData>(
           console.log('Serving file', url.pathname, mimeType);
           response.statusCode = 200;
           response.setHeader('Cache-Control', 'max-age=31536000');
-          response.setHeader('Content-Type', mimeType);
-          response.end(buffer);
+          responseEnd(mimeType, buffer).catch((err) => {
+            const { onError } = getErrorPage(500, global);
+            if (onError) {
+              onError(err);
+            }
+          });
         } else {
           throw new StatusCode(404);
         }
@@ -134,8 +190,12 @@ export default function createServer<AppData, PageData>(
 
       getContent().then((value) => {
         response.statusCode = 200;
-        response.setHeader('Content-Type', 'text/html');
-        response.end(value);
+        responseEnd('text/html', value).catch((err) => {
+          const { onError } = getErrorPage(500, global);
+          if (onError) {
+            onError(err);
+          }
+        });
       }, errorHandler);
     }
   };

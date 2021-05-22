@@ -53,6 +53,7 @@ export const DEFAULT_BUILD_OPTIONS: BuildFullOptions = {
   apiDir: 'api',
   target: 'es2017',
   enableEcmason: true,
+  enableCompression: true,
   env: {},
   plugins: [],
 };

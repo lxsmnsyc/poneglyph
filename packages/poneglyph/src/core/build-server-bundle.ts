@@ -159,6 +159,7 @@ const globalConfig = {
   publicDir: ${JSON.stringify(options.publicDir)},
   apiDir: ${JSON.stringify(options.apiDir)},
   enableEcmason: ${JSON.stringify(options.enableEcmason)},
+  enableCompression: ${JSON.stringify(options.enableCompression)},
   ${appPage ? `app: ${appPage},` : '// app: undefined'}
   ${documentPage ? `document: ${documentPage},` : '// document: undefined'}
   ${errorPage ? `error: ${errorPage},` : '// error: undefined'}

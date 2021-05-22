@@ -23,6 +23,7 @@
 - [X] ES Objects (e.g. `Map`, `Set`, etc.) server-side encoding to client-side decoding
 - [X] 404 through `getPageData`
 - [X] Static file serving through `/public`
+- [X] Request Compression
 - [ ] API routes through `/api`
 - [ ] Server-side code-splitting
 - [ ] Redirects
