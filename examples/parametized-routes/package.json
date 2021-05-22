@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "node ./.poneglyph",
     "build": "node build-src",
-    "dev": "node build-src && node ./.poneglyph"
+    "dev": "node build-src && node ./.poneglyph",
+    "start": "node build-src && NODE_ENV=production node ./.poneglyph"
   },
   "dependencies": {
     "poneglyph": "0.1.1",
