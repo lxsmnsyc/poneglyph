@@ -64,7 +64,8 @@
     "http-status-codes": "^2.1.4",
     "mime-types": "^2.1.30",
     "package-json-type": "^1.0.3",
-    "prop-types": "^15.7.2"
+    "prop-types": "^15.7.2",
+    "web-vitals": "^1.1.2"
   },
   "description": "React SSR framework, powered by ESBuild",
   "repository": {

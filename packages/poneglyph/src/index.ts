@@ -47,4 +47,5 @@ export {
   GetPageDataSuccess,
   ErrorProps,
   RouterParams,
+  WebVitalsMetric,
 } from './core/types';

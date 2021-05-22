@@ -2,6 +2,7 @@ import { Plugin } from 'esbuild';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ParsedUrlQuery } from 'querystring';
 import { ComponentType, ReactNode } from 'react';
+import { Metric } from 'web-vitals';
 
 export interface Dictionary {
   [key: string]: string;
@@ -43,13 +44,17 @@ export interface AppProps {
 
 export type App = ComponentType<AppProps>;
 
+export type WebVitalsMetric = Metric;
+
 export interface AppSSGPage {
   Component: App;
+  reportWebVitals?: (metric: WebVitalsMetric) => void;
   getAppData?: undefined;
 }
 
 export interface AppSSRPage<P> {
   Component: App;
+  reportWebVitals?: (metric: WebVitalsMetric) => void;
   getAppData: (ctx: ServerSideContext) => P | Promise<P>;
 }
 

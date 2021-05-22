@@ -1,6 +1,13 @@
 import React, { ComponentType, StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import { parse } from 'ecmason';
+import {
+  getCLS,
+  getFCP,
+  getFID,
+  getLCP,
+  getTTFB,
+} from 'web-vitals';
 import { DOCUMENT_DATA, DOCUMENT_MAIN_ROOT } from '../constants';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {
@@ -31,6 +38,14 @@ export default function hydrate<
 
   if (!dataSource) {
     throw new Error('missing DOCUMENT_DATA');
+  }
+
+  if (CustomAppPage.reportWebVitals) {
+    getCLS(CustomAppPage.reportWebVitals);
+    getFCP(CustomAppPage.reportWebVitals);
+    getFID(CustomAppPage.reportWebVitals);
+    getLCP(CustomAppPage.reportWebVitals);
+    getTTFB(CustomAppPage.reportWebVitals);
   }
 
   const encodedData = dataSource.textContent || '{}';

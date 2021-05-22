@@ -174,6 +174,7 @@ async function buildBrowserBundle(
 const App = {
   Component: AppComponent,
   getAppData: AppExports.getAppData ?? undefined,
+  reportWebVitals: AppExports.reportWebVitals ?? undefined,
 };`
       : 'import { DefaultApp as App } from \'poneglyph\';'
   );
