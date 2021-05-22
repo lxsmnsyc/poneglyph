@@ -1,4 +1,4 @@
-import React, { ComponentType } from 'react';
+import React, { ComponentType, StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import { parse } from 'ecmason';
 import { DOCUMENT_DATA, DOCUMENT_MAIN_ROOT } from '../constants';
@@ -33,15 +33,17 @@ export default function hydrate<
   );
 
   ReactDOM.hydrate((
-    <ErrorBoundary
-      fallback={<CustomErrorPage.Component statusCode={500} />}
-      onError={CustomErrorPage.onError}
-    >
-      <PoneglyphDataContext.Provider value={parsedData}>
-        <CustomAppPage.Component
-          Component={Component}
-        />
-      </PoneglyphDataContext.Provider>
-    </ErrorBoundary>
+    <StrictMode>
+      <ErrorBoundary
+        fallback={<CustomErrorPage.Component statusCode={500} />}
+        onError={CustomErrorPage.onError}
+      >
+        <PoneglyphDataContext.Provider value={parsedData}>
+          <CustomAppPage.Component
+            Component={Component}
+          />
+        </PoneglyphDataContext.Provider>
+      </ErrorBoundary>
+    </StrictMode>
   ), document.getElementById(DOCUMENT_MAIN_ROOT));
 }
