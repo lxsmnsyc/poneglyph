@@ -62,7 +62,7 @@ async function renderInternal<
     <DocumentContext.Provider
       value={{
         ...result,
-        data: stringify(result.data),
+        data: global.enableEcmason ? stringify(result.data) : JSON.stringify(result.data),
         scriptURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.js?version=${global.version}`,
         styleURL: `/${STATIC_PATH}/${options.resourceID}/${options.entrypoint}.css?version=${global.version}`,
       }}
@@ -89,7 +89,7 @@ export function renderError<AppData, P extends Params = Params, Q extends Query 
     <DocumentContext.Provider
       value={{
         ...result,
-        data: stringify(result.data),
+        data: global.enableEcmason ? stringify(result.data) : JSON.stringify(result.data),
         scriptURL: `/${STATIC_PATH}/${target}/${target}.js?version=${global.version}`,
         styleURL: `/${STATIC_PATH}/${target}/${target}.css?version=${global.version}`,
       }}

@@ -157,6 +157,8 @@ const globalConfig = {
   version: ${JSON.stringify(Date.now())},
   buildDir: ${JSON.stringify(path.join(options.buildDir, environment, 'browser'))},
   publicDir: ${JSON.stringify(options.publicDir)},
+  apiDir: ${JSON.stringify(options.apiDir)},
+  enableEcmason: ${JSON.stringify(options.enableEcmason)},
   ${appPage ? `app: ${appPage},` : '// app: undefined'}
   ${documentPage ? `document: ${documentPage},` : '// document: undefined'}
   ${errorPage ? `error: ${errorPage},` : '// error: undefined'}

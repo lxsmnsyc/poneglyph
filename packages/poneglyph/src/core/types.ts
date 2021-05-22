@@ -15,6 +15,7 @@ export interface BuildFullOptions {
   target: string;
   env: Dictionary;
   plugins: Plugin[];
+  enableEcmason: boolean;
   tsconfig?: string;
 }
 
@@ -102,6 +103,8 @@ export interface GlobalRenderOptions<AppData> {
   version: string;
   buildDir: string;
   publicDir: string;
+  apiDir: string;
+  enableEcmason: string;
   app?: AppPage<AppData>;
   document?: ComponentType;
   error404?: ErrorPage;

@@ -198,7 +198,9 @@ const ErrorPage = {
   ${errorImport}
   import Render from '${targetFile}';
 
-  hydrate(App, ErrorPage, Render);
+  hydrate(App, ErrorPage, Render, {
+    enableEcmason: ${JSON.stringify(options.enableEcmason)}
+  });
 `);
 
   const esbuild = await import('esbuild');

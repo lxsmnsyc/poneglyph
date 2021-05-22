@@ -12,6 +12,10 @@ import {
 } from './types';
 import { PoneglyphDataContext } from '../components/PoneglyphData';
 
+interface HydrationOptions {
+  enableEcmason: boolean;
+}
+
 export default function hydrate<
   AppData,
   PageData,
@@ -21,6 +25,7 @@ export default function hydrate<
   CustomAppPage: AppPage<AppData>,
   CustomErrorPage: ErrorPage,
   Component: ComponentType,
+  options: HydrationOptions,
 ): void {
   const dataSource = document.getElementById(DOCUMENT_DATA);
 
@@ -28,9 +33,11 @@ export default function hydrate<
     throw new Error('missing DOCUMENT_DATA');
   }
 
-  const parsedData = parse<PoneglyphData<AppData, PageData, P, Q>>(
-    dataSource.textContent || '{}',
-  );
+  const encodedData = dataSource.textContent || '{}';
+
+  const parsedData = options.enableEcmason
+    ? parse<PoneglyphData<AppData, PageData, P, Q>>(encodedData)
+    : JSON.parse(encodedData) as PoneglyphData<AppData, PageData, P, Q>;
 
   ReactDOM.hydrate((
     <StrictMode>
