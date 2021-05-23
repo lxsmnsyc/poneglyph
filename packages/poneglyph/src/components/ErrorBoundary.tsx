@@ -1,5 +1,4 @@
-import React from 'react';
-import { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 export type ErrorBoundaryOnError = (error: Error, info: ErrorInfo) => void;
 
@@ -28,7 +27,6 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     const { onError } = this.props;
-    console.log(info);
     onError?.(error, info);
   }
 

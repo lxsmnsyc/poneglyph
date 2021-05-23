@@ -7,7 +7,7 @@ export async function getArtifactBaseDirectory(
   bundleType: BundleType,
 ): Promise<string> {
   const path = await import('path');
-  return /* @__PURE__ */ path.join(
+  return path.join(
     options.buildDir,
     environment,
     BUILD_OUTPUT[bundleType].temp,

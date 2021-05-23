@@ -18,6 +18,7 @@ import {
   Query,
 } from './types';
 import { PoneglyphDataContext } from '../components/PoneglyphData';
+import ErrorOverlay from '../components/ErrorOverlay';
 
 interface HydrationOptions {
   enableEcmason: boolean;
@@ -56,16 +57,32 @@ export default function hydrate<
 
   ReactDOM.hydrate((
     <StrictMode>
-      <ErrorBoundary
-        fallback={<CustomErrorPage.Component statusCode={500} />}
-        onError={CustomErrorPage.onError}
-      >
-        <PoneglyphDataContext.Provider value={parsedData}>
-          <CustomAppPage.Component
-            Component={Component}
-          />
-        </PoneglyphDataContext.Provider>
-      </ErrorBoundary>
+      {
+        process.env.NODE_ENV === 'production'
+          ? (
+            <ErrorBoundary
+              fallback={<CustomErrorPage.Component statusCode={500} />}
+              onError={CustomErrorPage.onError}
+            >
+              <PoneglyphDataContext.Provider value={parsedData}>
+                <CustomAppPage.Component
+                  Component={Component}
+                />
+              </PoneglyphDataContext.Provider>
+            </ErrorBoundary>
+          )
+          : (
+            <ErrorOverlay
+              onError={CustomErrorPage.onError}
+            >
+              <PoneglyphDataContext.Provider value={parsedData}>
+                <CustomAppPage.Component
+                  Component={Component}
+                />
+              </PoneglyphDataContext.Provider>
+            </ErrorOverlay>
+          )
+      }
     </StrictMode>
   ), document.getElementById(DOCUMENT_MAIN_ROOT));
 }

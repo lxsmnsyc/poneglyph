@@ -143,7 +143,7 @@ async function buildBrowserBundle(
 
   await fs.remove(outDir);
 
-  const artifactDir = /* @__PURE__ */ await getArtifactDirectory(
+  const artifactDir = await getArtifactDirectory(
     options,
     environment,
     'browser',
