@@ -6,6 +6,7 @@ import getArtifactDirectory, { getArtifactBaseDirectory } from './get-artifact-d
 import getPages from './get-pages';
 import getPOSIXPath from './get-posix-path';
 import resolveTSConfig from './resolve-tsconfig';
+import traverseDirectory from './traverse-directory';
 import { BuildFullOptions } from './types';
 
 async function getApp(pageDir: string): Promise<string | undefined> {
@@ -253,6 +254,77 @@ export default async function buildBrowserBundles(
     environment,
     'browser',
   ));
+
+  if (options.enableCompression) {
+    const path = await import('path');
+    const targetDirectory = path.join(
+      process.cwd(),
+      options.buildDir,
+      environment,
+      BUILD_OUTPUT.browser.output,
+    );
+    const files = await traverseDirectory(targetDirectory);
+
+    const zlib = await import('zlib');
+
+    const createCompress = async (
+      file: string,
+      extension: string,
+      compress: (content: Buffer) => Promise<Buffer>,
+    ): Promise<void> => {
+      const targetFile = path.join(targetDirectory, file);
+      const content = await fs.readFile(targetFile);
+      const compressed = await compress(content);
+      await fs.outputFile(
+        path.join(path.dirname(targetFile), `${path.basename(targetFile)}.${extension}`),
+        compressed,
+      );
+    };
+
+    const createBrotli = async (file: string): Promise<void> => {
+      await createCompress(file, 'br', (content) => new Promise((resolve, reject) => {
+        zlib.brotliCompress(content, {}, (error, res) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(res);
+          }
+        });
+      }));
+    };
+
+    const createGzip = async (file: string): Promise<void> => {
+      await createCompress(file, 'gz', (content) => new Promise((resolve, reject) => {
+        zlib.gzip(content, {}, (error, res) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(res);
+          }
+        });
+      }));
+    };
+
+    const createDeflate = async (file: string): Promise<void> => {
+      await createCompress(file, 'deflate', (content) => new Promise((resolve, reject) => {
+        zlib.deflate(content, {}, (error, res) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(res);
+          }
+        });
+      }));
+    };
+
+    await Promise.all(files.map((file) => (
+      Promise.all([
+        createBrotli(file),
+        createGzip(file),
+        createDeflate(file),
+      ])
+    )));
+  }
 
   return result;
 }

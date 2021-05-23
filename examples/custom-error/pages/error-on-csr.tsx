@@ -1,9 +1,13 @@
 import React, { useEffect } from 'react';
 
-export default function CSRError(): JSX.Element {
+function CSRErrorInternal(): JSX.Element {
   useEffect(() => {
     throw new Error('hit!');
   }, []);
 
   return <h1>This will error</h1>;
+}
+
+export default function CSRError(): JSX.Element {
+  return <CSRErrorInternal />;
 }

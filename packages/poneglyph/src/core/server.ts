@@ -36,53 +36,29 @@ export default function createServer<AppData, PageData>(
   });
 
   return function requestListener(request, response): void {
-    async function responseEnd(type: string, content: string | Buffer): Promise<void> {
-      const zlib = await import('zlib');
-      let output = content;
+    function getEncoding(): string | undefined {
       if (global.enableCompression) {
         const encoding = request.headers['accept-encoding'];
         if (encoding) {
           if (encoding.includes('br')) {
-            response.setHeader('Content-Encoding', 'br');
-            output = await new Promise((resolve, reject) => {
-              zlib.brotliCompress(content, {}, (err, result) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve(result);
-                }
-              });
-            });
-          } else if (encoding.includes('gzip')) {
-            response.setHeader('Content-Encoding', 'gzip');
-            output = await new Promise((resolve, reject) => {
-              zlib.gzip(content, {}, (err, result) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve(result);
-                }
-              });
-            });
-          } else if (encoding.includes('deflate')) {
-            response.setHeader('Content-Encoding', 'deflate');
-            output = await new Promise((resolve, reject) => {
-              zlib.deflate(content, {}, (err, result) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve(result);
-                }
-              });
-            });
+            return 'br';
+          }
+          if (encoding.includes('gzip')) {
+            return 'gzip';
+          }
+          if (encoding.includes('deflate')) {
+            return 'deflate';
           }
           //  else if (encoding.includes('compress')) {
           //   response.setHeader('Content-Encoding', 'compress');
           // }
         }
       }
+      return undefined;
+    }
+    function responseEnd(type: string, content: string | Buffer): void {
       response.setHeader('Content-Type', type);
-      response.end(output);
+      response.end(content);
     }
     function errorHandler(error: Error) {
       const statusCode = (error instanceof StatusCode) ? error.value : 500;
@@ -104,12 +80,7 @@ export default function createServer<AppData, PageData>(
       response.statusCode = statusCode;
       responseEnd('text/html', renderError(context, global, {
         statusCode,
-      })).catch((err) => {
-        const { onError } = getErrorPage(statusCode, global);
-        if (onError) {
-          onError(err);
-        }
-      });
+      }));
     }
 
     const { host } = request.headers;
@@ -128,19 +99,18 @@ export default function createServer<AppData, PageData>(
         const exists = await fileExists(targetFile);
         const mimeType = mime.contentType(path.basename(file));
 
-        console.log(targetFile);
-
         if (exists && mimeType) {
-          const buffer = await fs.readFile(targetFile);
-          console.log('Serving file', url.pathname, mimeType);
+          const encoding = getEncoding();
+          const buffer = encoding && prefix === `/${STATIC_PATH}/`
+            ? await fs.readFile(`${targetFile}.${encoding}`)
+            : await fs.readFile(targetFile);
+          if (encoding) {
+            response.setHeader('Content-Encoding', encoding);
+          }
+
           response.statusCode = 200;
           response.setHeader('Cache-Control', 'max-age=31536000');
-          responseEnd(mimeType, buffer).catch((err) => {
-            const { onError } = getErrorPage(500, global);
-            if (onError) {
-              onError(err);
-            }
-          });
+          responseEnd(mimeType, buffer);
         } else {
           throw new StatusCode(404);
         }
@@ -190,12 +160,7 @@ export default function createServer<AppData, PageData>(
 
       getContent().then((value) => {
         response.statusCode = 200;
-        responseEnd('text/html', value).catch((err) => {
-          const { onError } = getErrorPage(500, global);
-          if (onError) {
-            onError(err);
-          }
-        });
+        responseEnd('text/html', value);
       }, errorHandler);
     }
   };
