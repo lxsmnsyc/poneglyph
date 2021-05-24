@@ -134,20 +134,16 @@ async function buildBrowserBundle(
   const filename = path.basename(targetPage, extname);
 
   const extensionLessFile = path.join(directory, filename);
-  const outDir = path.join(
-    options.buildDir,
-    environment,
-    BUILD_OUTPUT.browser.output,
-    RESERVED_PAGES.includes(extensionLessFile) ? extensionLessFile : `${index}`,
-  );
 
-  await fs.remove(outDir);
+  const preferredDirectory = RESERVED_PAGES.includes(extensionLessFile)
+    ? extensionLessFile
+    : `${index}`;
 
   const artifactDir = await getArtifactDirectory(
     options,
     environment,
     'browser',
-    `${index}`,
+    preferredDirectory,
   );
 
   const artifact = path.join(
@@ -233,6 +229,8 @@ export default async function buildBrowserBundles(
     environment,
     'browser',
   );
+
+  await fs.remove(outDir);
 
   const result = await esbuild.build({
     entryPoints: (await traverseDirectory(artifactDir)).map((file) => (
