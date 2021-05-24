@@ -113,7 +113,6 @@ interface ErrorOverlaySourceProps {
 
 const sourceContainerStyle = cxs({
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-  marginTop: '0.5rem',
 });
 
 const sourceURLStyle = cxs({
