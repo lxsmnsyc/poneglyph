@@ -204,13 +204,40 @@ const ErrorPage = {
     enableEcmason: ${JSON.stringify(options.enableEcmason)}
   });
 `);
+}
+
+export default async function buildBrowserBundles(
+  options: BuildFullOptions,
+  environment: string,
+): Promise<BuildResult | undefined> {
+  const fs = await import('fs-extra');
+
+  const pages = await getPages(options.pagesDir);
+
+  await Promise.all(
+    pages.map((page, index) => (
+      buildBrowserBundle(options, environment, page, index)
+    )),
+  );
 
   const esbuild = await import('esbuild');
+  const path = await import('path');
+
+  const outDir = path.join(
+    options.buildDir,
+    environment,
+    BUILD_OUTPUT.browser.output,
+  );
+  const artifactDir = await getArtifactBaseDirectory(
+    options,
+    environment,
+    'browser',
+  );
 
   const result = await esbuild.build({
-    entryPoints: [
-      artifact,
-    ],
+    entryPoints: (await traverseDirectory(artifactDir)).map((file) => (
+      path.join(artifactDir, file)
+    )),
     outdir: outDir,
     bundle: true,
     minify: environment === 'production',
@@ -230,33 +257,9 @@ const ErrorPage = {
     tsconfig: await resolveTSConfig(options.tsconfig),
   });
 
-  await fs.remove(artifact);
-
-  return result;
-}
-
-export default async function buildBrowserBundles(
-  options: BuildFullOptions,
-  environment: string,
-): Promise<(BuildResult | undefined)[]> {
-  const fs = await import('fs-extra');
-
-  const pages = await getPages(options.pagesDir);
-
-  const result = await Promise.all(
-    pages.map((page, index) => (
-      buildBrowserBundle(options, environment, page, index)
-    )),
-  );
-
-  await fs.remove(await getArtifactBaseDirectory(
-    options,
-    environment,
-    'browser',
-  ));
+  await fs.remove(artifactDir);
 
   if (options.enableCompression) {
-    const path = await import('path');
     const targetDirectory = path.join(
       process.cwd(),
       options.buildDir,
