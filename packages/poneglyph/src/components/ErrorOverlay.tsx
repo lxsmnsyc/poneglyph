@@ -1,5 +1,5 @@
+import cxs from 'cxs';
 import React, {
-  CSSProperties,
   ErrorInfo,
   ReactNode,
   useEffect,
@@ -9,35 +9,35 @@ import { RawSourceMap, SourceMapConsumer } from 'source-map';
 import { getSourceMap, sourceMapExists } from '../utils/source-map-url';
 import ErrorBoundary, { ErrorBoundaryOnError } from './ErrorBoundary';
 
-const sourceCodeContainerStyle: CSSProperties = {
-  margin: '0.25rem',
+const sourceCodeContainerStyle = cxs({
+  margin: '0.25rem 0',
   overflowX: 'scroll',
-};
+});
 
-const sourceCodeLineStyle: CSSProperties = {
+const sourceCodeLineStyle = cxs({
   fontSize: '0.75rem',
   lineHeight: '1rem',
   display: 'flex',
   whiteSpace: 'pre',
-};
+});
 
-const sourceCodeIndexStyle: CSSProperties = {
+const sourceCodeIndexStyle = cxs({
   paddingLeft: '0.5rem',
   paddingRight: '0.5rem',
   borderRightWidth: '1px',
   borderRightStyle: 'solid',
   borderRightColor: 'black',
-};
+});
 
-const sourceCodeContentSelectedStyle: CSSProperties = {
+const sourceCodeContentSelectedStyle = cxs({
   paddingLeft: '0.5rem',
   backgroundColor: 'rgb(254, 202, 202)',
   width: '100%',
-};
+});
 
-const sourceCodeContentStyle: CSSProperties = {
+const sourceCodeContentStyle = cxs({
   paddingLeft: '0.5rem',
-};
+});
 
 interface ErrorOverlayCodeViewProps {
   content: string;
@@ -61,13 +61,13 @@ function ErrorOverlayCodeView(
   const maxLine = Math.min(actualLine + 4, lines.length - 1);
 
   return (
-    <div style={sourceCodeContainerStyle}>
+    <div className={sourceCodeContainerStyle}>
       {
         lines.slice(minLine, maxLine).map((item) => (
-          <div key={item.index} style={sourceCodeLineStyle}>
-            <div style={sourceCodeIndexStyle}>{item.index}</div>
+          <div key={item.index} className={sourceCodeLineStyle}>
+            <div className={sourceCodeIndexStyle}>{item.index}</div>
             <div
-              style={item.index === line
+              className={item.index === line
                 ? sourceCodeContentSelectedStyle
                 : sourceCodeContentStyle}
             >
@@ -111,25 +111,30 @@ interface ErrorOverlaySourceProps {
   value: string;
 }
 
-const sourceContainerStyle: CSSProperties = {
+const sourceContainerStyle = cxs({
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
   marginTop: '0.5rem',
-};
+});
 
-const sourceURLStyle: CSSProperties = {
+const sourceURLStyle = cxs({
   fontSize: '0.875rem',
   lineHeight: '1.25rem',
-};
+  color: 'rgb(107, 114, 128)',
+});
 
-const stackFrameButtonStyle: CSSProperties = {
+const stackFrameButtonStyle = cxs({
   border: 'none',
   fontWeight: 500,
   padding: '0.625rem 0.375rem',
   fontSize: '0.75rem',
   lineHeight: '1rem',
-  backgroundColor: 'none',
+  backgroundColor: 'transparent',
   fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-};
+  borderRadius: '0.25rem',
+  ':hover': {
+    backgroundColor: 'rgb(229, 231, 235)',
+  },
+});
 
 function ErrorOverlaySource({ value }: ErrorOverlaySourceProps): JSX.Element | null {
   const [show, setShow] = useState(false);
@@ -212,11 +217,11 @@ function ErrorOverlaySource({ value }: ErrorOverlaySourceProps): JSX.Element | n
 
   if (compiled) {
     return (
-      <div style={sourceContainerStyle}>
+      <div className={sourceContainerStyle}>
         {
           compiledSource && compiledLine && compiledContent && compiledColumn && (
             <>
-              <span style={sourceURLStyle}>
+              <span className={sourceURLStyle}>
                 {`${compiledSource}:${compiledLine}:${compiledColumn}`}
               </span>
               <ErrorOverlayCodeView
@@ -228,7 +233,7 @@ function ErrorOverlaySource({ value }: ErrorOverlaySourceProps): JSX.Element | n
         }
         <button
           type="button"
-          style={stackFrameButtonStyle}
+          className={stackFrameButtonStyle}
           onClick={() => {
             setCompiled(!compiled);
           }}
@@ -240,11 +245,11 @@ function ErrorOverlaySource({ value }: ErrorOverlaySourceProps): JSX.Element | n
   }
 
   return (
-    <div style={sourceContainerStyle}>
+    <div className={sourceContainerStyle}>
       {
         originalSource && originalLine && originalSourceMap && originalColumn && (
           <>
-            <span style={sourceURLStyle}>
+            <span className={sourceURLStyle}>
               {`${originalSource.replace('../../../../', '')}:${originalLine}:${originalColumn}`}
             </span>
             <ErrorOverlaySourceCode
@@ -257,7 +262,7 @@ function ErrorOverlaySource({ value }: ErrorOverlaySourceProps): JSX.Element | n
       }
       <button
         type="button"
-        style={stackFrameButtonStyle}
+        className={stackFrameButtonStyle}
         onClick={() => {
           setCompiled(!compiled);
         }}
@@ -272,28 +277,28 @@ interface ErrorOverlayStackFrameProps {
   value: string;
 }
 
-const stackFrameContainerStyle: CSSProperties = {
+const stackFrameContainerStyle = cxs({
   marginTop: '1rem',
   marginBottom: '1rem',
-};
+});
 
-const stackFrameTitleStyle: CSSProperties = {
+const stackFrameTitleStyle = cxs({
   fontSize: '1rem',
   lineHeight: '1.5rem',
-};
+});
 
-const stackFrameComponentNameStyle: CSSProperties = {
+const stackFrameComponentNameStyle = cxs({
   fontWeight: 500,
-};
+});
 
 function ErrorOverlayStackFrame({ value }: ErrorOverlayStackFrameProps): JSX.Element {
   const [, component, source] = value.trim().split(' ');
 
   return (
-    <div style={stackFrameContainerStyle}>
-      <div style={stackFrameTitleStyle}>
+    <div className={stackFrameContainerStyle}>
+      <div className={stackFrameTitleStyle}>
         {'at '}
-        <span style={stackFrameComponentNameStyle}>{component}</span>
+        <span className={stackFrameComponentNameStyle}>{component}</span>
       </div>
       {source && <ErrorOverlaySource value={source} />}
     </div>
@@ -315,22 +320,23 @@ interface ErrorOverlayFallback {
   info: ErrorInfo;
 }
 
-const overlayContainerStyle: CSSProperties = {
+const overlayContainerStyle = cxs({
   fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-  margin: '2rem',
-};
+  margin: '2rem 4rem',
+});
 
-const overlayTitleStyle: CSSProperties = {
+const overlayTitleStyle = cxs({
   fontSize: '1.25rem',
   lineHeight: '1.75rem',
   overflowWrap: 'normal',
   wordBreak: 'normal',
-};
+  color: 'rgb(239, 68, 68)',
+});
 
 function ErrorOverlayFallback({ error, info }: ErrorOverlayFallback): JSX.Element {
   return (
-    <div style={overlayContainerStyle}>
-      <h1 style={overlayTitleStyle}>{`${error.name}: ${error.message}`}</h1>
+    <div className={overlayContainerStyle}>
+      <h1 className={overlayTitleStyle}>{`${error.name}: ${error.message}`}</h1>
       <ErrorOverlayStack componentStack={info.componentStack} />
     </div>
   );
