@@ -55,6 +55,8 @@ export default function hydrate<
     ? parse<PoneglyphData<AppData, PageData, P, Q>>(encodedData)
     : JSON.parse(encodedData) as PoneglyphData<AppData, PageData, P, Q>;
 
+  const Page = () => <Component {...parsedData.pageData} />;
+
   ReactDOM.hydrate((
     <StrictMode>
       {
@@ -66,7 +68,7 @@ export default function hydrate<
             >
               <PoneglyphDataContext.Provider value={parsedData}>
                 <CustomAppPage.Component
-                  Component={Component}
+                  Component={Page}
                 />
               </PoneglyphDataContext.Provider>
             </ErrorBoundary>
@@ -77,7 +79,7 @@ export default function hydrate<
             >
               <PoneglyphDataContext.Provider value={parsedData}>
                 <CustomAppPage.Component
-                  Component={Component}
+                  Component={Page}
                 />
               </PoneglyphDataContext.Provider>
             </ErrorOverlay>
