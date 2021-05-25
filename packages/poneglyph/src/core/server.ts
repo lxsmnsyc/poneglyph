@@ -6,12 +6,18 @@ import {
   SSROptions,
 } from './render';
 import { addRoute, createRouterNode, matchRoute } from './router';
-import { PUBLIC_PATH, STATIC_PATH } from '../constants';
+import { API_PATH, PUBLIC_PATH, STATIC_PATH } from '../constants';
 import StatusCode from './errors/StatusCode';
 import { GlobalRenderOptions, ServerSideContext } from './types';
 import { getErrorPage } from '../components/Error';
 
 export type ServerOptions<P> = (SSGOptions | SSROptions<P>)[];
+export type APICallback = (ctx: ServerSideContext) => void | Promise<void>;
+
+interface API {
+  path: string;
+  call: APICallback;
+}
 
 async function fileExists(path: string): Promise<boolean> {
   const fs = await import('fs-extra');
@@ -27,12 +33,19 @@ async function fileExists(path: string): Promise<boolean> {
 
 export default function createServer<AppData, PageData>(
   global: GlobalRenderOptions<AppData>,
-  options: ServerOptions<PageData>,
+  pages: ServerOptions<PageData>,
+  endpoints: API[],
 ): RequestListener {
-  const node = createRouterNode<SSGOptions | SSROptions<PageData>>('');
+  const pageNode = createRouterNode<SSGOptions | SSROptions<PageData>>('');
 
-  options.forEach((option) => {
-    addRoute(node, option.path.split('/'), option);
+  pages.forEach((page) => {
+    addRoute(pageNode, page.path.split('/'), page);
+  });
+
+  const apiNode = createRouterNode<APICallback>('');
+
+  endpoints.forEach((endpoint) => {
+    addRoute(apiNode, endpoint.path.split('/'), endpoint.call);
   });
 
   return function requestListener(request, response): void {
@@ -87,6 +100,7 @@ export default function createServer<AppData, PageData>(
     const originalURL = request.url;
 
     if (host && originalURL) {
+      console.log('Requesting', originalURL);
       const readStaticFile = async (prefix: string, basePath: string) => {
         const fs = await import('fs-extra');
         const path = await import('path');
@@ -96,6 +110,7 @@ export default function createServer<AppData, PageData>(
         const file = url.pathname.substring(prefix.length);
         const targetFile = path.join(basePath, file);
 
+        console.log('Attempting to read', targetFile);
         const exists = await fileExists(targetFile);
         const mimeType = mime.contentType(path.basename(file));
 
@@ -108,6 +123,7 @@ export default function createServer<AppData, PageData>(
             response.setHeader('Content-Encoding', encoding);
           }
 
+          console.log('Serving file', url.pathname);
           response.statusCode = 200;
           response.setHeader('Cache-Control', 'max-age=31536000');
           responseEnd(mimeType, buffer);
@@ -125,6 +141,36 @@ export default function createServer<AppData, PageData>(
         readStaticFile(staticPrefix, global.buildDir).catch(errorHandler);
         return;
       }
+
+      const apiPrefix = `/${API_PATH}`;
+
+      if (originalURL.startsWith(apiPrefix)) {
+        const readAPI = async () => {
+          const querystring = await import('querystring');
+
+          const url = new URL(originalURL, `http://${host}`);
+
+          const splitPath = url.pathname.replace(apiPrefix, '').split('/');
+
+          const matchedNode = matchRoute(apiNode, splitPath);
+
+          if (matchedNode && matchedNode.value) {
+            console.log('Serving API', url.pathname);
+            await matchedNode.value({
+              request,
+              response,
+              params: matchedNode.params,
+              query: querystring.decode(url.search),
+            });
+          } else {
+            throw new StatusCode(404);
+          }
+        };
+
+        readAPI().catch(errorHandler);
+        return;
+      }
+
       const getContent = async (): Promise<string> => {
         try {
           const querystring = await import('querystring');
@@ -133,7 +179,7 @@ export default function createServer<AppData, PageData>(
 
           const splitPath = url.pathname.split('/');
 
-          const matchedNode = matchRoute(node, splitPath);
+          const matchedNode = matchRoute(pageNode, splitPath);
 
           if (matchedNode && matchedNode.value) {
             const option = matchedNode.value;

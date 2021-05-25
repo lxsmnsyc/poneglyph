@@ -6,6 +6,8 @@ export const DOCUMENT_DATA = 'poneglyph__data';
 
 export const STATIC_PATH = '_poneglyph';
 
+export const API_PATH = 'api';
+
 export const PUBLIC_PATH = 'public';
 
 export const CUSTOM_APP = '_app';

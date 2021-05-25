@@ -52,10 +52,12 @@ export interface AppSSGPage {
   getAppData?: undefined;
 }
 
+export type GetAppData<P> = (ctx: ServerSideContext) => P | Promise<P>;
+
 export interface AppSSRPage<P> {
   Component: App;
   reportWebVitals?: (metric: WebVitalsMetric) => void;
-  getAppData: (ctx: ServerSideContext) => P | Promise<P>;
+  getAppData: GetAppData<P>;
 }
 
 export type AppPage<P> = AppSSGPage | AppSSRPage<P>;

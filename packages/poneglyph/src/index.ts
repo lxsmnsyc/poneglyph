@@ -41,6 +41,7 @@ export {
 } from './components/Link';
 export {
   AppProps,
+  GetAppData,
   GetPageData,
   GetPageDataNotFound,
   GetPageDataResult,
@@ -48,4 +49,5 @@ export {
   ErrorProps,
   RouterParams,
   WebVitalsMetric,
+  ServerSideContext,
 } from './core/types';

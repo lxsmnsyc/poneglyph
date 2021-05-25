@@ -25,6 +25,7 @@ export default async function buildServerBundle(
   const fs = await import('fs-extra');
 
   const pages = await getPages(options.pagesDir);
+  const endpoints = await getPages(options.apiDir);
 
   const outputDirectory = path.join(
     options.buildDir,
@@ -60,6 +61,20 @@ export default async function buildServerBundle(
 
     return `import Page${index}, * as Page${index}Exports from '${targetFile}';`;
   }));
+
+  artifactImportHeader.push(...await Promise.all(endpoints.map(async (endpoint, index) => {
+    const extname = path.extname(endpoint);
+    const directory = path.dirname(endpoint);
+    const filename = path.basename(endpoint, extname);
+
+    const srcFile = path.join(options.apiDir, directory, filename);
+
+    const targetFile = await getPOSIXPath(
+      path.relative(artifactDirectory, srcFile),
+    );
+
+    return `import API${index} from '${targetFile}';`;
+  })));
 
   async function getCustomPage(page: string): Promise<string | undefined> {
     const result = await Promise.all(
@@ -206,12 +221,42 @@ const globalConfig = {
     return `const pages = [${pagesOptions.join(',\n')}];`;
   }
 
+  async function getEndpointOption(page: string, index: number): Promise<string> {
+    const extname = path.extname(page);
+    const directory = path.dirname(page);
+    const filename = path.basename(page, extname);
+
+    const extensionless = path.join(directory, filename);
+
+    const output = `{
+  path: ${JSON.stringify(await getPOSIXPath(path.join('/', extensionless)))},
+  call: API${index},
+}`;
+    if (filename === DIRECTORY_ROOT) {
+      return `{
+  path: ${JSON.stringify(await getPOSIXPath(path.join('/', directory)))},
+  call: API${index},
+}, ${output}`;
+    }
+
+    return output;
+  }
+
+  async function getEndpointOptions(): Promise<string> {
+    const endpointOptions: string[] = await Promise.all(
+      endpoints.map(getEndpointOption),
+    );
+
+    return `const endpoints = [${endpointOptions.join(',\n')}];`;
+  }
+
   artifactImportHeader.push(await getPagesOptions());
+  artifactImportHeader.push(await getEndpointOptions());
   artifactImportHeader.push(`
 import { createServer } from 'poneglyph';
 import http from 'http';
 
-http.createServer(createServer(globalConfig, pages)).listen(3000);
+http.createServer(createServer(globalConfig, pages, endpoints)).listen(3000);
 `);
 
   const artifact = path.join(artifactDirectory, 'index.tsx');
@@ -241,6 +286,7 @@ http.createServer(createServer(globalConfig, pages)).listen(3000);
     plugins: options.plugins,
     external: await readExternals(),
     tsconfig: await resolveTSConfig(options.tsconfig),
+    legalComments: 'none',
   });
 
   await fs.remove(artifact);

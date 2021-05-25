@@ -10,9 +10,9 @@ export default async function createBuild(config: BuildOptions): Promise<void> {
   };
 
   await Promise.all([
-    buildBrowserBundles(fullConfig, 'production'),
     buildBrowserBundles(fullConfig, 'development'),
-    buildServerBundle(fullConfig, 'production'),
     buildServerBundle(fullConfig, 'development'),
+    buildBrowserBundles(fullConfig, 'production'),
+    buildServerBundle(fullConfig, 'production'),
   ]);
 }
