@@ -249,7 +249,7 @@ function ErrorOverlaySource({ value }: ErrorOverlaySourceProps): JSX.Element | n
         originalSource && originalLine && originalSourceMap && originalColumn && (
           <>
             <span className={sourceURLStyle}>
-              {`${originalSource.replace('../../../../', '')}:${originalLine}:${originalColumn}`}
+              {`${originalSource}:${originalLine}:${originalColumn}`}
             </span>
             <ErrorOverlaySourceCode
               sourceMap={originalSourceMap}
