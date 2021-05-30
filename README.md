@@ -24,8 +24,7 @@
 - [X] 404 through `getPageData`
 - [X] Static file serving through `/public`
 - [X] Request Compression
-- [ ] API routes through `/api`
-- [ ] Server-side code-splitting
+- [X] API routes through `/api`
 - [ ] Redirects
 
 More to add
