@@ -5,20 +5,24 @@ export default async function traverseDirectory(
   const fs = await import('fs-extra');
   const path = await import('path');
 
-  const files = await fs.readdir(directory);
+  try {
+    const files = await fs.readdir(directory);
 
-  const recursiveTraverse = async (file: string) => {
-    const fullPath = path.join(directory, file);
+    const recursiveTraverse = async (file: string) => {
+      const fullPath = path.join(directory, file);
 
-    if ((await fs.lstat(fullPath)).isDirectory()) {
-      return traverseDirectory(root, fullPath);
-    }
-    return path.relative(root, fullPath);
-  };
+      if ((await fs.lstat(fullPath)).isDirectory()) {
+        return traverseDirectory(root, fullPath);
+      }
+      return path.relative(root, fullPath);
+    };
 
-  const results = await Promise.all(
-    files.map(recursiveTraverse),
-  );
+    const results = await Promise.all(
+      files.map(recursiveTraverse),
+    );
 
-  return results.flat();
+    return results.flat();
+  } catch (err) {
+    return [];
+  }
 }

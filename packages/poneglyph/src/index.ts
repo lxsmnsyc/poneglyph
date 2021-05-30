@@ -40,6 +40,10 @@ export {
   LinkProps,
 } from './components/Link';
 export {
+  default as lazy,
+  LazyOptions,
+} from './components/Lazy';
+export {
   AppProps,
   GetAppData,
   GetPageData,
