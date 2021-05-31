@@ -17,6 +17,89 @@ import readExternals from './read-externals';
 import resolveTSConfig from './resolve-tsconfig';
 import { BuildFullOptions } from './types';
 
+function getAPILiteral(index: number) {
+  return `API${index}`;
+}
+
+function getPageLiteral(index: number) {
+  return `Page${index}`;
+}
+
+function getPageExportsLiteral(index: number) {
+  return `Page${index}Exports`;
+}
+
+async function getPageExports(
+  options: BuildFullOptions,
+  artifactDirectory: string,
+  pages: string[],
+): Promise<string[]> {
+  const path = await import('path');
+
+  return pages.map((page, index) => {
+    const { name, dir } = path.parse(page);
+
+    const srcFile = path.join(options.pagesDir, dir, name);
+
+    const targetFile = path.relative(artifactDirectory, srcFile)
+      .split(path.sep)
+      .join(path.posix.sep);
+
+    const extensionless = path.join(dir, name);
+
+    if (RESERVED_PAGES.includes(extensionless)) {
+      return '';
+    }
+
+    const pageLiteral = getPageLiteral(index);
+    const pageExportsLiteral = getPageExportsLiteral(index);
+    return `import ${pageLiteral}, * as ${pageExportsLiteral} from '${targetFile}';`;
+  });
+}
+
+async function getAPIExports(
+  options: BuildFullOptions,
+  artifactDirectory: string,
+  endpoints: string[],
+): Promise<string[]> {
+  const path = await import('path');
+  return endpoints.map((endpoint, index) => {
+    const { name, dir } = path.parse(endpoint);
+
+    const srcFile = path.join(options.apiDir, dir, name);
+
+    const targetFile = path.relative(artifactDirectory, srcFile)
+      .split(path.sep)
+      .join(path.posix.sep);
+
+    return `import ${getAPILiteral(index)} from '${targetFile}';`;
+  });
+}
+
+async function getEndpointOption(
+  page: string,
+  index: number,
+): Promise<string> {
+  const path = await import('path');
+
+  const { name, dir } = path.parse(page);
+
+  const extensionless = path.join(dir, name);
+
+  const output = `{
+path: ${JSON.stringify(await getPOSIXPath(path.join('/', extensionless)))},
+call: ${getAPILiteral(index)},
+}`;
+  if (name === DIRECTORY_ROOT) {
+    return `{
+path: ${JSON.stringify(await getPOSIXPath(path.join('/', dir)))},
+call: API${getAPILiteral(index)},
+}, ${output}`;
+  }
+
+  return output;
+}
+
 export default async function buildServerBundle(
   options: BuildFullOptions,
   environment: string,
@@ -42,39 +125,17 @@ export default async function buildServerBundle(
   );
 
   // Create import header
-  const artifactImportHeader = await Promise.all(pages.map(async (page, index) => {
-    const extname = path.extname(page);
-    const directory = path.dirname(page);
-    const filename = path.basename(page, extname);
+  const lines = await getPageExports(
+    options,
+    artifactDirectory,
+    pages,
+  );
 
-    const srcFile = path.join(options.pagesDir, directory, filename);
-
-    const targetFile = await getPOSIXPath(
-      path.relative(artifactDirectory, srcFile),
-    );
-
-    const extensionless = path.join(directory, filename);
-
-    if (RESERVED_PAGES.includes(extensionless)) {
-      return '';
-    }
-
-    return `import Page${index}, * as Page${index}Exports from '${targetFile}';`;
-  }));
-
-  artifactImportHeader.push(...await Promise.all(endpoints.map(async (endpoint, index) => {
-    const extname = path.extname(endpoint);
-    const directory = path.dirname(endpoint);
-    const filename = path.basename(endpoint, extname);
-
-    const srcFile = path.join(options.apiDir, directory, filename);
-
-    const targetFile = await getPOSIXPath(
-      path.relative(artifactDirectory, srcFile),
-    );
-
-    return `import API${index} from '${targetFile}';`;
-  })));
+  lines.push(...await getAPIExports(
+    options,
+    artifactDirectory,
+    endpoints,
+  ));
 
   async function getCustomPage(page: string): Promise<string | undefined> {
     const result = await Promise.all(
@@ -111,19 +172,18 @@ export default async function buildServerBundle(
     const result = await getCustomPage(page);
 
     if (result) {
-      const extensionless = path.join(
-        path.dirname(result),
-        path.basename(result, path.extname(result)),
-      );
-      const importPath = await getPOSIXPath(
-        path.relative(artifactDirectory, extensionless),
-      );
-      const name = page.toUpperCase();
-      artifactImportHeader.push(
-        `import ${name}Component, * as ${name}Exports from '${importPath}';`,
+      const { name, dir } = path.parse(result);
+      const extensionless = path.join(dir, name);
+      const importPath = path.relative(artifactDirectory, extensionless)
+        .split(path.sep)
+        .join(path.posix.sep);
+
+      const literal = page.toUpperCase();
+      lines.push(
+        `import ${literal}Component, * as ${literal}Exports from '${importPath}';`,
       );
 
-      return name;
+      return literal;
     }
     return undefined;
   }
@@ -132,7 +192,7 @@ export default async function buildServerBundle(
     const result = await injectCustomPageImport(CUSTOM_APP);
 
     if (result) {
-      artifactImportHeader.push(
+      lines.push(
         `const ${result} = {
           Component: ${result}Component,
           getAppData: ${result}Exports.getAppData ?? undefined,
@@ -148,7 +208,7 @@ export default async function buildServerBundle(
     const result = await injectCustomPageImport(page);
 
     if (result) {
-      artifactImportHeader.push(
+      lines.push(
         `const ${result} = {
           Component: ${result}Component,
           onError: ${result}Exports.onError ?? undefined,
@@ -166,7 +226,7 @@ export default async function buildServerBundle(
   const error500 = await injectCustomErrorPage(CUSTOM_500);
   const errorPage = await injectCustomErrorPage(CUSTOM_ERROR);
 
-  artifactImportHeader.push(
+  lines.push(
     `
 const globalConfig = {
   version: ${JSON.stringify(Date.now())},
@@ -199,16 +259,16 @@ const globalConfig = {
   path: ${JSON.stringify(await getPOSIXPath(path.join('/', extensionless)))},
   resourceID: '${index}',
   entrypoint: '${filename}',
-  Component: Page${index},
-  getPageData: Page${index}Exports.getPageData ?? undefined,
+  Component: ${getPageLiteral(index)},
+  getPageData: ${getPageExportsLiteral(index)}.getPageData ?? undefined,
 }`;
     if (filename === DIRECTORY_ROOT) {
       return `{
   path: ${JSON.stringify(await getPOSIXPath(path.join('/', directory)))},
   resourceID: '${index}',
   entrypoint: '${filename}',
-  Component: Page${index},
-  getPageData: Page${index}Exports.getPageData ?? undefined,
+  Component: ${getPageLiteral(index)},
+  getPageData: ${getPageExportsLiteral(index)}.getPageData ?? undefined,
 }, ${output}`;
     }
 
@@ -221,27 +281,6 @@ const globalConfig = {
     return `const pages = [${pagesOptions.join(',\n')}];`;
   }
 
-  async function getEndpointOption(page: string, index: number): Promise<string> {
-    const extname = path.extname(page);
-    const directory = path.dirname(page);
-    const filename = path.basename(page, extname);
-
-    const extensionless = path.join(directory, filename);
-
-    const output = `{
-  path: ${JSON.stringify(await getPOSIXPath(path.join('/', extensionless)))},
-  call: API${index},
-}`;
-    if (filename === DIRECTORY_ROOT) {
-      return `{
-  path: ${JSON.stringify(await getPOSIXPath(path.join('/', directory)))},
-  call: API${index},
-}, ${output}`;
-    }
-
-    return output;
-  }
-
   async function getEndpointOptions(): Promise<string> {
     const endpointOptions: string[] = await Promise.all(
       endpoints.map(getEndpointOption),
@@ -250,9 +289,9 @@ const globalConfig = {
     return `const endpoints = [${endpointOptions.join(',\n')}];`;
   }
 
-  artifactImportHeader.push(await getPagesOptions());
-  artifactImportHeader.push(await getEndpointOptions());
-  artifactImportHeader.push(`
+  lines.push(await getPagesOptions());
+  lines.push(await getEndpointOptions());
+  lines.push(`
 import { createServer } from 'poneglyph';
 import http from 'http';
 
@@ -263,7 +302,7 @@ http.createServer(createServer(globalConfig, pages, endpoints)).listen(3000);
 
   await fs.outputFile(
     artifact,
-    artifactImportHeader.join('\n'),
+    lines.join('\n'),
   );
 
   const esbuild = await import('esbuild');

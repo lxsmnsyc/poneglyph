@@ -101,12 +101,13 @@ export default function createServer<AppData, PageData>(
 
     if (host && originalURL) {
       console.log('Requesting', originalURL);
+      const url = new URL(originalURL, `http://${host}`);
+
       const readStaticFile = async (prefix: string, basePath: string) => {
         const fs = await import('fs-extra');
         const path = await import('path');
         const mime = await import('mime-types');
 
-        const url = new URL(originalURL, `http://${host}`);
         const file = url.pathname.substring(prefix.length);
         const targetFile = path.join(basePath, file);
 
@@ -148,8 +149,6 @@ export default function createServer<AppData, PageData>(
         const readAPI = async () => {
           const querystring = await import('querystring');
 
-          const url = new URL(originalURL, `http://${host}`);
-
           const splitPath = url.pathname.replace(apiPrefix, '').split('/');
 
           const matchedNode = matchRoute(apiNode, splitPath);
@@ -174,8 +173,6 @@ export default function createServer<AppData, PageData>(
       const getContent = async (): Promise<string> => {
         try {
           const querystring = await import('querystring');
-
-          const url = new URL(originalURL, `http://${host}`);
 
           const splitPath = url.pathname.split('/');
 
