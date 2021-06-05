@@ -1,8 +1,8 @@
+import { useForceUpdate } from '@lyonph/react-hooks';
 import React, {
   ComponentType,
   ReactNode,
   useEffect,
-  useState,
 } from 'react';
 
 export interface LazyOptions {
@@ -36,51 +36,54 @@ export default function lazy<P>(
   load: () => Promise<LazyComponent<P>>,
   options?: LazyOptions,
 ): ComponentType<P> {
-  return (props: P) => {
-    const [state, setState] = useState<Result<LazyComponent<P>>>({
-      status: 'pending',
+  let localState: Result<LazyComponent<P>> = {
+    status: 'pending',
+  };
+
+  function loadComponent(): Promise<void> {
+    return load().then((value) => {
+      localState = {
+        status: 'success',
+        value,
+      };
+    }, (value: any) => {
+      localState = {
+        status: 'failure',
+        value,
+      };
     });
+  }
+
+  return (props: P) => {
+    const forceUpdate = useForceUpdate();
 
     useEffect(() => {
       let mounted = true;
 
-      load().then(
-        (value) => {
-          if (mounted) {
-            setState({
-              status: 'success',
-              value,
-            });
-          }
-        },
-        (value: any) => {
-          if (mounted) {
-            setState({
-              status: 'failure',
-              value,
-            });
-          }
-        },
-      );
+      loadComponent().finally(() => {
+        if (mounted) {
+          forceUpdate();
+        }
+      });
 
       return () => {
         mounted = false;
       };
-    }, []);
+    }, [forceUpdate]);
 
-    if (state.status === 'pending') {
+    if (localState.status === 'pending') {
       if (typeof options?.fallback === 'function') {
         return <>{options?.fallback()}</>;
       }
       return <>{options?.fallback}</>;
     }
-    if (state.status === 'failure') {
-      throw state.value;
+    if (localState.status === 'failure') {
+      throw localState.value;
     }
 
-    const Component = 'default' in state.value
-      ? state.value.default
-      : state.value;
+    const Component = 'default' in localState.value
+      ? localState.value.default
+      : localState.value;
     return <Component {...props} />;
   };
 }
