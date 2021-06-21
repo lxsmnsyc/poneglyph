@@ -27,8 +27,8 @@ export const DocumentHead: FC = ({ children }) => {
     <head>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      {children}
       {context?.head}
+      {children}
       <link
         rel="preload"
         as="style"
@@ -97,10 +97,11 @@ export const DocumentHtml: FC<DetailedHTMLProps<
 
 export const DefaultDocument: FC = () => (
   <DocumentHtml>
-    <DocumentHead />
+    <DocumentHead>
+      <DocumentScript />
+    </DocumentHead>
     <body>
       <DocumentMain />
-      <DocumentScript />
       <DocumentTail />
     </body>
   </DocumentHtml>
