@@ -195,7 +195,7 @@ export default async function buildServerBundle(
       lines.push(
         `const ${result} = {
           Component: ${result}Component,
-          getAppData: ${result}Exports.getAppData ?? undefined,
+          getAppData: ${result}Exports.getAppData,
         }`,
       );
 
@@ -211,7 +211,7 @@ export default async function buildServerBundle(
       lines.push(
         `const ${result} = {
           Component: ${result}Component,
-          onError: ${result}Exports.onError ?? undefined,
+          onError: ${result}Exports.onError,
         }`,
       );
 
@@ -260,7 +260,7 @@ const globalConfig = {
   resourceID: '${index}',
   entrypoint: '${filename}',
   Component: ${getPageLiteral(index)},
-  getPageData: ${getPageExportsLiteral(index)}.getPageData ?? undefined,
+  getPageData: ${getPageExportsLiteral(index)}.getPageData,
 }`;
     if (filename === DIRECTORY_ROOT) {
       return `{
@@ -268,7 +268,7 @@ const globalConfig = {
   resourceID: '${index}',
   entrypoint: '${filename}',
   Component: ${getPageLiteral(index)},
-  getPageData: ${getPageExportsLiteral(index)}.getPageData ?? undefined,
+  getPageData: ${getPageExportsLiteral(index)}.getPageData,
 }, ${output}`;
     }
 
