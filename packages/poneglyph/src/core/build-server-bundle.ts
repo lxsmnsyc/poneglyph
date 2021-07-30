@@ -195,7 +195,7 @@ export default async function buildServerBundle(
       lines.push(
         `const ${result} = {
           Component: ${result}Component,
-          getAppData: ${result}Exports.getAppData,
+          getAppData: 'getAppData' in ${result}Exports ? ${result}Exports.getAppData : null,
         }`,
       );
 
@@ -255,12 +255,14 @@ const globalConfig = {
       return '';
     }
 
+    const exportsLiteral = getPageExportsLiteral(index);
+
     const output = `{
   path: ${JSON.stringify(await getPOSIXPath(path.join('/', extensionless)))},
   resourceID: '${index}',
   entrypoint: '${filename}',
   Component: ${getPageLiteral(index)},
-  getPageData: ${getPageExportsLiteral(index)}.getPageData,
+  getPageData: 'getPageData' in ${exportsLiteral} ? ${exportsLiteral}.getPageData : null,
 }`;
     if (filename === DIRECTORY_ROOT) {
       return `{
@@ -268,7 +270,7 @@ const globalConfig = {
   resourceID: '${index}',
   entrypoint: '${filename}',
   Component: ${getPageLiteral(index)},
-  getPageData: ${getPageExportsLiteral(index)}.getPageData,
+  getPageData: 'getPageData' in ${exportsLiteral} ? ${exportsLiteral}.getPageData : null,
 }, ${output}`;
     }
 
