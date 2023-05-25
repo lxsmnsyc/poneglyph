@@ -6,12 +6,13 @@ import {
   useEffect,
   useRef,
 } from 'react';
+import useSWR from 'swr';
 import assert from './assert';
 import type {
-  LayoutProps,
   LoadResult,
   Page,
   PageRouter,
+  RouterParams,
   RouterResult,
 } from './router-node';
 import {
@@ -20,7 +21,6 @@ import {
 import type { UseLocationOptions } from './use-location';
 import useLocation from './use-location';
 import ErrorBoundary from './ErrorBoundary';
-import { useCache } from './cache';
 import { LocationContext, ParamsContext, useRouter } from './use-router';
 
 interface RouterData {
@@ -51,19 +51,37 @@ function Redirect({ target }: RedirectProps): JSX.Element {
   return <>{null}</>;
 }
 
-interface RouterPageProps {
+interface RouterPageLayoutProps<T, P extends RouterParams = RouterParams> {
   path: string;
-  Page: Page<any, any>;
-  data: LoadResult<any> | undefined;
+  params: P;
+  Page: Page<T, P>;
+  data: LoadResult<T> | undefined;
+  NotFound?: () => JSX.Element;
+  children: (value: T) => JSX.Element;
 }
 
-function RouterPage({ path, data, Page }: RouterPageProps): JSX.Element {
+function RouterPageLayout<T, P extends RouterParams = RouterParams>({
+  path,
+  params,
+  data,
+  Page,
+  children,
+  NotFound,
+}: RouterPageLayoutProps<T, P>): JSX.Element {
   const flag = useContext(RouterFlagContext);
   assert(flag, new Error('Missing RouterFlagContext'));
-  const current = useCache<LoadResult<any>>(
-    path,
-    flag.current ? data : undefined,
-  );
+  const { data: current } = useSWR(params, async (): Promise<LoadResult<T>> => {
+    if (Page.load) {
+      return Page.load(params);
+    }
+    return { props: undefined as T };
+  }, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    errorRetryCount: 1,
+    suspense: true,
+    fallbackData: flag.current ? data : undefined,
+  });
 
   useEffect(() => {
     flag.current = false;
@@ -73,14 +91,17 @@ function RouterPage({ path, data, Page }: RouterPageProps): JSX.Element {
     return <Redirect target={current.redirect} />;
   }
   if ('notFound' in current) {
-    return <>{Page.NotFound && <Page.NotFound />}</>;
+    return <>{NotFound && <NotFound />}</>;
   }
-  const Render = Page.default;
-  return <Render path={path} data={data} />;
-}
-
-function DEFAULT_PAGE_LAYOUT({ children }: LayoutProps): JSX.Element {
-  return <>{children}</>;
+  const Render = Page.Layout;
+  if (Render) {
+    return (
+      <Render path={path} params={params} data={current.props}>
+        {children(current.props)}
+      </Render>
+    );
+  }
+  return <>{children(current.props)}</>;
 }
 
 interface RouteBuilderProps {
@@ -94,23 +115,36 @@ function RouteBuilder({ depth, NotFound }: RouteBuilderProps): JSX.Element {
   if (current) {
     const { params, path, value } = current;
     if (value) {
-      const PageLayout = value.Layout ?? DEFAULT_PAGE_LAYOUT;
       const data = ctx.data[depth];
       const isLayout = depth < ctx.result.length - 1;
 
       return (
         <ParamsContext.Provider value={params}>
-          <PageLayout>
-            <ErrorBoundary Fallback={value.Fallback}>
-              <Suspense fallback={value.Loading && <value.Loading />}>
-                {
-                  isLayout
-                    ? <RouteBuilder depth={depth + 1} NotFound={value.NotFound} />
-                    : <RouterPage path={path} data={data} Page={value} />
-                }
-              </Suspense>
-            </ErrorBoundary>
-          </PageLayout>
+          <RouterPageLayout
+            path={path}
+            data={data}
+            params={params}
+            Page={value}
+            NotFound={NotFound}
+          >
+            {(currentData): JSX.Element => (
+              <ErrorBoundary Fallback={value.Fallback}>
+                <Suspense fallback={value.Loading && <value.Loading />}>
+                  {
+                    isLayout
+                      ? <RouteBuilder depth={depth + 1} NotFound={value.NotFound} />
+                      : (
+                        <value.default
+                          path={path}
+                          data={currentData as unknown}
+                          params={params}
+                        />
+                      )
+                  }
+                </Suspense>
+              </ErrorBoundary>
+            )}
+          </RouterPageLayout>
         </ParamsContext.Provider>
       );
     }

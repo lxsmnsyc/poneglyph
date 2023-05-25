@@ -1,0 +1,9 @@
+{
+  "target": "es2018",
+  "entrypoints": {
+    "./router": "router/index.ts",
+    "./client": "client/index.tsx",
+    "./server": "server/index.ts",
+    "./vite": "vite/index.ts"
+  }
+}

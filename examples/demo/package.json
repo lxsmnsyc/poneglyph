@@ -1,0 +1,32 @@
+{
+  "name": "node-example",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node server",
+    "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
+    "build:client": "vite build --outDir dist/client src/entry-client.tsx"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.3",
+    "@types/react": "^18.2.7",
+    "@types/react-dom": "^18.2.4",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.41.0",
+    "eslint-config-lxsmnsyc": "^0.6.5",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.1",
+    "typescript": "^4.9.5",
+    "unplugin-thaler": "^0.6.1",
+    "vite": "^4.3.8"
+  },
+  "dependencies": {
+    "poneglyph": "0.0.0",
+    "poneglyph-adapter-node": "0.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "thaler": "^0.6.1"
+  },
+  "version": "0.0.0"
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from './Router';
 import { isLocalURL, isModifiedEvent } from './utilities';
+import { useRouter } from './use-router';
 
 export type BaseAnchorAttributes = JSX.IntrinsicElements['a'];
 

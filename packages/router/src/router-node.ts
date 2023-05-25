@@ -30,7 +30,7 @@ function addRoute<T>(
 ): void {
   let node = parent;
   let paths = '';
-  for (let i = 0, len = path.length; i < len; i += 1) {
+  for (let i = 0, len = path.length; i < len; i++) {
     const current = path[i];
     if (i !== 0) {
       paths += `/${current}`;
@@ -85,7 +85,7 @@ export interface Route<T> {
 export function createRouterTree<T>(routes: Route<T>[]): RouterNode<T> {
   const root = createRouterNode<T>('');
 
-  for (let i = 0, len = routes.length; i < len; i += 1) {
+  for (let i = 0, len = routes.length; i < len; i++) {
     const route = routes[i];
     addRoute(root, normalizePath(route.path).split('/'), route.value);
   }
@@ -105,7 +105,7 @@ export function matchRoute<T>(root: RouterNode<T>, path: string): (RouterResult<
   const paths = normalizePath(path).split('/');
   let node = root;
 
-  for (let i = 0, len = paths.length; i < len; i += 1) {
+  for (let i = 0, len = paths.length; i < len; i++) {
     const current = paths[i];
     if (current in node.normal) {
       node = node.normal[current];
@@ -133,23 +133,19 @@ export function matchRoute<T>(root: RouterNode<T>, path: string): (RouterResult<
         params: { ...params },
       };
       break;
+    } else {
+      results[i] = undefined;
     }
   }
 
   return results;
 }
 
-export interface PageProps<P> {
+export interface PageProps<T, P extends RouterParams = RouterParams> {
   path: string;
-  data: P;
+  params: P;
+  data: T;
 }
-
-type TPageProps<U> = U extends LoadResult<infer P> ? PageProps<P> : PageProps<never>;
-
-export type InferPageProps<T extends (...args: any[]) => any> =
- T extends Load<infer R> ?
-  PageProps<Awaited<R>> :
-   ReturnType<T> extends Promise<infer U> ? TPageProps<U> : TPageProps<ReturnType<T>>;
 
 export interface SuccessResult<T> {
   props: T;
@@ -169,25 +165,21 @@ export type LoadResult<T> =
   | RedirectResult;
 
 export type Load<T, P extends RouterParams = RouterParams> = (
-  request: Request,
   params: P,
 ) => (Promise<LoadResult<T>> | LoadResult<T>);
 
 export type APIHandler<P extends RouterParams> = (
   request: Request,
   params: P,
-) => Response | Promise<Response>;
+) => (Response | Promise<Response>);
 
 export type APIRoute = Route<APIHandler<any>>;
 export type APIRouter = RouterNode<APIHandler<any>>;
 
-export function createAPIHandler<P extends RouterParams>(
-  loader: APIHandler<P>,
-): APIHandler<P> {
-  return loader;
-}
-
-export interface LayoutProps {
+export interface LayoutProps<T, P extends RouterParams = RouterParams> {
+  path: string;
+  params: P;
+  data: T;
   children: React.ReactNode;
 }
 
@@ -198,11 +190,11 @@ export interface FallbackProps {
 
 export interface Page<T, P extends RouterParams = RouterParams> {
   load?: Load<T, P>;
-  Layout?: (props: LayoutProps) => JSX.Element;
+  Layout?: (props: LayoutProps<T, P>) => JSX.Element;
   NotFound?: () => JSX.Element;
   Loading?: () => JSX.Element;
   Fallback?: (props: FallbackProps) => JSX.Element;
-  default: (props: PageProps<T>) => JSX.Element;
+  default: (props: PageProps<T, P>) => JSX.Element;
 }
 
 export type PageRoute = Route<Page<any, any>>;
