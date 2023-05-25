@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "node server",
-    "build:server": "vite build --outDir dist/server --ssr src/entry-server.tsx",
-    "build:client": "vite build --outDir dist/client src/entry-client.tsx"
+    "build:server": "vite build --ssr",
+    "build:client": "vite build"
   },
   "devDependencies": {
     "@types/node": "^20.2.3",

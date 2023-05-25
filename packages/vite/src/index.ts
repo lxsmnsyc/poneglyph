@@ -49,22 +49,16 @@ export default function poneglyphPlugin(
       name: 'poneglyph',
       enforce: 'pre',
       config(_config, env): UserConfig {
-        if (env.command === 'build') {
-          return {
-            build: {
+        return {
+          build: env.command === 'build'
+            ? {
+              manifest: true,
               rollupOptions: {
                 input: env.ssrBuild ? options.entry.server : options.entry.client,
               },
-            },
-            ssr: {
-              noExternal: [
-                'poneglyph',
-              ],
-            },
-          };
-        }
-
-        return {
+              outDir: env.ssrBuild ? 'dist/server' : 'dist/client',
+            }
+            : {},
           ssr: {
             noExternal: [
               'poneglyph',

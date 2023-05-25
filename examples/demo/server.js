@@ -1,5 +1,17 @@
 import { createServer } from 'poneglyph/server';
 import { createNodeAdapter } from 'poneglyph-adapter-node';
+import { readFile } from 'fs/promises';
+
+const serverManifest = JSON.parse(
+  await readFile(
+    new URL('./dist/server/manifest.json', import.meta.url)
+  )
+);
+const clientManifest = JSON.parse(
+  await readFile(
+    new URL('./dist/client/manifest.json', import.meta.url)
+  )
+);
 
 createServer({
   env: process.env.NODE_ENV,
@@ -9,8 +21,8 @@ createServer({
       assets: './dist/client/assets',
     }),
     build: {
-      server: () => import('./dist/server/entry-server.js'),
-      client: './dist/client/entry-client.js',
+      server: () => import(serverManifest['src/entry-server.tsx'].file),
+      client: clientManifest['src/entry-client.tsx'].file,
     }
   },
   dev: {
