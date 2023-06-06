@@ -1,33 +1,47 @@
 # poneglyph
 
-## Packages
+> Dead-simple Vite SSR for SolidJS
 
-## Examples
+## 🚧 UNDER CONSTRUCTION 🚧
 
-## Goals
+## Install
 
-- [X] File-based routing
-- [X] CSS imports
-- [X] Parametized Routing
-- [X] Wildcard Routing
-- [X] Custom App
-- [X] Custom Document
-- [X] Custom Error Page
-- [X] Custom 404 Page
-- [X] Custom 500 Page
-- [X] Server-side data fetching for pages through `getPageData` and `usePageData`
-- [X] Server-side data fetching for custom app through `getAppData` and `useAppData`
-- [X] Asset versioning
-- [X] Client-side code-splitting (not extended to lazy-loaded components)
-- [X] Navigation prefetching
-- [X] ES Objects (e.g. `Map`, `Set`, etc.) server-side encoding to client-side decoding
-- [X] 404 through `getPageData`
-- [X] Static file serving through `/public`
-- [X] Request Compression
-- [X] API routes through `/api`
-- [ ] Redirects
+```bash
+npm i react react-dom poneglyph
+npm i -D vite
+```
 
-More to add
+```bash
+yarn add react react-dom poneglyph
+yarn add -D vite
+```
+
+```bash
+pnpm add react react-dom poneglyph
+pnpm add -D vite
+```
+
+## Getting Started
+
+## Features
+
+TODO
+
+### Routing
+
+TODO
+
+### Pages
+
+TODO
+
+### Loaders
+
+TODO
+
+### Adapters
+
+TODO
 
 ## License
 

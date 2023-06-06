@@ -1,0 +1,122 @@
+{
+  "name": "poneglyph",
+  "version": "0.0.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "license": "MIT",
+  "keywords": [
+    "pridepack"
+  ],
+  "scripts": {
+    "prepublishOnly": "pridepack clean && pridepack build",
+    "build": "pridepack build",
+    "type-check": "pridepack check",
+    "lint": "pridepack lint",
+    "clean": "pridepack clean",
+    "watch": "pridepack watch",
+    "start": "pridepack start",
+    "dev": "pridepack dev",
+    "test": "vitest"
+  },
+  "description": "",
+  "repository": {
+    "url": "https://github.com/lxsmnsyc/poneglyph.git",
+    "type": "git"
+  },
+  "homepage": "https://github.com/lxsmnsyc/poneglyph/tree/main/packages/core",
+  "bugs": {
+    "url": "https://github.com/lxsmnsyc/poneglyph/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Alexis Munsayac",
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^20.2.3",
+    "@types/react": "^18.2.7",
+    "@types/react-dom": "^18.2.4",
+    "eslint": "^8.41.0",
+    "eslint-config-lxsmnsyc": "^0.6.5",
+    "pridepack": "2.4.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tslib": "^2.5.0",
+    "typescript": "^4.9.4",
+    "vite": "^4.3.8",
+    "vitest": "^0.29.8"
+  },
+  "peerDependencies": {
+    "react": "^18",
+    "react-dom": "^18",
+    "vite": "^4"
+  },
+  "dependencies": {
+    "@remix-run/web-fetch": "^4.3.3",
+    "h3": "^1.6.4",
+    "listhen": "^1.0.4",
+    "poneglyph-router": "0.0.0",
+    "poneglyph-vite": "0.0.0",
+    "seroval": "^0.8.0"
+  },
+  "exports": {
+    "./router": {
+      "development": {
+        "require": "./dist/cjs/development/router.cjs",
+        "import": "./dist/esm/development/router.mjs"
+      },
+      "require": "./dist/cjs/production/router.cjs",
+      "import": "./dist/esm/production/router.mjs",
+      "types": "./dist/types/router/index.d.ts"
+    },
+    "./client": {
+      "development": {
+        "require": "./dist/cjs/development/client.cjs",
+        "import": "./dist/esm/development/client.mjs"
+      },
+      "require": "./dist/cjs/production/client.cjs",
+      "import": "./dist/esm/production/client.mjs",
+      "types": "./dist/types/client/index.d.ts"
+    },
+    "./server": {
+      "development": {
+        "require": "./dist/cjs/development/server.cjs",
+        "import": "./dist/esm/development/server.mjs"
+      },
+      "require": "./dist/cjs/production/server.cjs",
+      "import": "./dist/esm/production/server.mjs",
+      "types": "./dist/types/server/index.d.ts"
+    },
+    "./vite": {
+      "development": {
+        "require": "./dist/cjs/development/vite.cjs",
+        "import": "./dist/esm/development/vite.mjs"
+      },
+      "require": "./dist/cjs/production/vite.cjs",
+      "import": "./dist/esm/production/vite.mjs",
+      "types": "./dist/types/vite/index.d.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "router": [
+        "./dist/types/router/index.d.ts"
+      ],
+      "client": [
+        "./dist/types/client/index.d.ts"
+      ],
+      "server": [
+        "./dist/types/server/index.d.ts"
+      ],
+      "vite": [
+        "./dist/types/vite/index.d.ts"
+      ]
+    }
+  }
+}

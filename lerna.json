@@ -1,5 +1,4 @@
 {
-  "npmClient": "yarn",
   "useWorkspaces": true,
   "packages": [
     "packages/*",
@@ -10,12 +9,11 @@
       "exact": true
     },
     "publish": {
-      "npmClient": "yarn",
       "allowBranch": [
         "main"
       ],
       "registry": "https://registry.npmjs.org/"
     }
   },
-  "version": "0.1.1"
+  "version": "0.0.1"
 }
